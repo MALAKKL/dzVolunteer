@@ -1,0 +1,52 @@
+{
+  "devDependencies": {
+    "prisma": "^6.19.0"
+  },
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "dependencies": {
+    "@prisma/client": "^6.19.0",
+    "bcrypt": "^6.0.0",
+    "c12": "^3.1.0",
+    "chokidar": "^4.0.3",
+    "citty": "^0.1.6",
+    "confbox": "^0.2.2",
+    "consola": "^3.4.2",
+    "cors": "^2.8.5",
+    "deepmerge-ts": "^7.1.5",
+    "defu": "^6.1.4",
+    "destr": "^2.0.5",
+    "dotenv": "^16.6.1",
+    "effect": "^3.18.4",
+    "empathic": "^2.0.0",
+    "express": "^5.1.0",
+    "exsolve": "^1.0.8",
+    "fast-check": "^3.23.2",
+    "giget": "^2.0.0",
+    "jiti": "^2.6.1",
+    "jsonwebtoken": "^9.0.2",
+    "node-fetch-native": "^1.6.7",
+    "nodemon": "^3.1.11",
+    "nypm": "^0.6.2",
+    "ohash": "^2.0.11",
+    "pathe": "^2.0.3",
+    "perfect-debounce": "^1.0.0",
+    "pg": "^8.16.3",
+    "pkg-types": "^2.3.0",
+    "pure-rand": "^6.1.0",
+    "rc9": "^2.1.2",
+    "readdirp": "^4.1.2",
+    "tinyexec": "^1.0.2"
+  },
+  "scripts": {
+    "dev": "nodemon src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
