@@ -13,6 +13,9 @@ const prisma = new PrismaClient();
 // Import routes
 const authRoutes = require("./routes/authRoutes");
 
+const missionRoutes = require("./routes/missionRoutes");
+app.use("/api/missions", missionRoutes);
+
 const app = express();
 app.use(express.json());
 app.use(cors());
