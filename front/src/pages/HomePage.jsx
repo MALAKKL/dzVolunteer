@@ -95,7 +95,7 @@ export default function Home() {
             <button className="join-btn">Join us</button>
           </div>
           <div className="home-image">
-            <img src="/7.png" alt="Volunteer" />
+            <img src="/vol1.png" alt="Volunteer" />
           </div>
         </section>
 
@@ -103,7 +103,7 @@ export default function Home() {
         <section id="about" ref={(el) => (sectionRefs.current["about"] = el)} className="section about-section">
           <div className="about-container">
             <div className="about-image">
-              <img src="/10.png" alt="About Us" />
+              <img src="/vol2.png" alt="About Us" />
             </div>
             <div className="about-content">
               <h2>About Us</h2>
