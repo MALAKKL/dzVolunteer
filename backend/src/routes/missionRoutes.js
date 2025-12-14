@@ -9,8 +9,8 @@ const {
   deleteMission,
 } = require("../controllers/missionController");
 
-const { protect } = require("../middlewares/authMiddleware");
-const { isOrganization } = require("../middlewares/roleMiddleware");
+const { protect } = require("../middleware/authMiddleware");
+const { isOrganization } = require("../middleware/roleMiddleware");
 
 // Public
 router.get("/", getAllMissions);

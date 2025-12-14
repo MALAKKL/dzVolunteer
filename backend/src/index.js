@@ -10,20 +10,20 @@ const cors = require("cors");
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-// Import routes
-const authRoutes = require("./routes/authRoutes");
-
-const missionRoutes = require("./routes/missionRoutes");
-app.use("/api/missions", missionRoutes);
-
+// Initialize app BEFORE using routes
 const app = express();
+
+// Middleware
 app.use(express.json());
 app.use(cors());
 
-const PORT = process.env.PORT || 5000;
+// Import routes
+const authRoutes = require("./routes/authRoutes");
+const missionRoutes = require("./routes/missionRoutes");
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/missions", missionRoutes);
 
 // Test route
 app.get("/", (req, res) => {
@@ -44,4 +44,5 @@ app.get("/volunteers", async (req, res) => {
 });
 
 // Start server
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
