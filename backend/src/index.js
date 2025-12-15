@@ -19,11 +19,17 @@ app.use(cors());
 
 // Import routes
 const authRoutes = require("./routes/authRoutes");
-const missionRoutes = require("./routes/missionRoutes");
+const missionRoutesOrg = require("./routes/missionRoutesOrg");
+const missionRoutesPublic = require("./routes/missionRoutesPublic");
+
+// Public mission routes
+app.use("/api/missions", missionRoutesPublic);
+
+// Organization-only mission routes
+app.use("/api/organization/missions", missionRoutesOrg);
 
 // Routes
 app.use("/api/auth", authRoutes);
-app.use("/api/missions", missionRoutes);
 
 // Test route
 app.get("/", (req, res) => {
