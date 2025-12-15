@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { FaEnvelope, FaLock } from "react-icons/fa";
-
+import { FaEnvelope, FaLock } from "react-icons/fa"
+import styles from "../styles/signUp.module.css"
 
 export default function LoginForm({ accountType, setAccountType, userInfo, setUserInfo }) {
   const [email, setEmail] = useState("")
@@ -27,17 +27,11 @@ export default function LoginForm({ accountType, setAccountType, userInfo, setUs
   const validateForm = () => {
     const newErrors = {}
 
-    if (!email) {
-      newErrors.email = "Email is required"
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = "Email is invalid"
-    }
+    if (!email) newErrors.email = "Email is required"
+    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = "Email is invalid"
 
-    if (!password) {
-      newErrors.password = "Password is required"
-    } else if (password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters"
-    }
+    if (!password) newErrors.password = "Password is required"
+    else if (password.length < 8) newErrors.password = "Password must be at least 8 characters"
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -45,14 +39,12 @@ export default function LoginForm({ accountType, setAccountType, userInfo, setUs
 
   const handleLogin = async (e) => {
     e.preventDefault()
-
     if (!validateForm()) return
 
     setLoading(true)
 
     setTimeout(() => {
       const mockUser = mockUsers[accountType]
-
       if (email === mockUser.email && password === mockUser.password) {
         const userData = {
           accountType,
@@ -61,39 +53,36 @@ export default function LoginForm({ accountType, setAccountType, userInfo, setUs
             ? { firstName: mockUser.firstName, familyName: mockUser.familyName }
             : { organizationName: mockUser.organizationName }),
         }
+
         setUserInfo(userData)
         setErrors({})
-        console.log("Login successful:", userData)
         alert(`Welcome back! You've been logged in.`)
       } else {
-        setErrors({
-          form: "Invalid email or password",
-        })
+        setErrors({ form: "Invalid email or password" })
       }
       setLoading(false)
     }, 1000)
   }
 
-  const getGreeting = () => {
-    if (accountType === "volunteer") {
-      return `Hello ${userInfo?.firstName || "Volunteer"}`
-    } else {
-      return `Hello ${userInfo?.organizationName || "Organization"}`
-    }
-  }
+  const getGreeting = () =>
+    accountType === "volunteer"
+      ? `Hello ${userInfo?.firstName || "Volunteer"}`
+      : `Hello ${userInfo?.organizationName || "Organization"}`
 
   return (
-    <div className="form-section">
-      <div className="form-container">
-        <div className="form-header">
+    <div className={styles["form-section"]}>
+      <div className={styles["form-container"]}>
+        <div className={styles["form-header"]}>
           <h2>{getGreeting()}</h2>
-          <p>welcome back please entre you details</p>
+          <p>welcome back please enter your details</p>
         </div>
 
         {/* Account Type Tabs */}
-        <div className="tabs-container">
+        <div className={styles["tabs-container"]}>
           <button
-            className={`tab-button ${accountType === "volunteer" ? "active" : "inactive"}`}
+            className={`${styles["tab-button"]} ${
+              accountType === "volunteer" ? styles.active : styles.inactive
+            }`}
             onClick={() => {
               setAccountType("volunteer")
               setUserInfo(null)
@@ -103,7 +92,9 @@ export default function LoginForm({ accountType, setAccountType, userInfo, setUs
             Volunteer
           </button>
           <button
-            className={`tab-button ${accountType === "organization" ? "active" : "inactive"}`}
+            className={`${styles["tab-button"]} ${
+              accountType === "organization" ? styles.active : styles.inactive
+            }`}
             onClick={() => {
               setAccountType("organization")
               setUserInfo(null)
@@ -115,56 +106,52 @@ export default function LoginForm({ accountType, setAccountType, userInfo, setUs
         </div>
 
         {errors.form && (
-          <div className="error-message" style={{ marginBottom: "1rem", textAlign: "center" }}>
+          <div className={styles["error-message"]}>
             {errors.form}
           </div>
         )}
 
         {/* Login Form */}
         <form onSubmit={handleLogin}>
-         {/* Email Field */}
-<div className="form-group">
-  <div className="input-wrapper">
-    <FaEnvelope className="input-icon" />
-    <input
-      type="email"
-      placeholder=".    Email"
-      className="form-input"
-      value={email}
-      onChange={(e) => {
-        setEmail(e.target.value);
-        if (errors.email) setErrors({ ...errors, email: "" });
-      }}
-    />
-  </div>
-  {errors.email && <div className="error-message">{errors.email}</div>}
-</div>
+          <div className={styles["form-group"]}>
+            <div className={styles["input-wrapper"]}>
+              <FaEnvelope className={styles["input-icon"]} />
+              <input
+                type="email"
+                placeholder="Email"
+                className={styles["form-input"]}
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value)
+                  if (errors.email) setErrors({ ...errors, email: "" })
+                }}
+              />
+            </div>
+            {errors.email && <div className={styles["error-message"]}>{errors.email}</div>}
+          </div>
 
-{/* Password Field */}
-<div className="form-group">
-  <div className="input-wrapper">
-    <FaLock className="input-icon" />
-    <input
-      type="password"
-      placeholder=".    Password"
-      className="form-input"
-      value={password}
-      onChange={(e) => {
-        setPassword(e.target.value);
-        if (errors.password) setErrors({ ...errors, password: "" });
-      }}
-    />
-  </div>
-  {errors.password && <div className="error-message">{errors.password}</div>}
-</div>
+          <div className={styles["form-group"]}>
+            <div className={styles["input-wrapper"]}>
+              <FaLock className={styles["input-icon"]} />
+              <input
+                type="password"
+                placeholder="Password"
+                className={styles["form-input"]}
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value)
+                  if (errors.password) setErrors({ ...errors, password: "" })
+                }}
+              />
+            </div>
+            {errors.password && <div className={styles["error-message"]}>{errors.password}</div>}
+          </div>
 
-
-          {/* Password Requirements and Forgot Link */}
-          <div className="password-requirements">
+          <div className={styles["password-requirements"]}>
             <span>password must be at least 8 characters long</span>
             <a
               href="#"
-              className="forgot-link"
+              className={styles["forgot-link"]}
               onClick={(e) => {
                 e.preventDefault()
                 alert("Password reset link would be sent to: " + email)
@@ -174,8 +161,7 @@ export default function LoginForm({ accountType, setAccountType, userInfo, setUs
             </a>
           </div>
 
-          {/* Login Button */}
-          <button type="submit" className="submit-button" disabled={loading}>
+          <button type="submit" className={styles["submit-button"]} disabled={loading}>
             <span>→</span>
             {loading ? "Logging in..." : "Log in"}
           </button>

@@ -3,7 +3,7 @@ import { FaFacebookF, FaLinkedinIn, FaInstagram, FaMobileAlt } from "react-icons
 import { SiX } from "react-icons/si"; // X icon
 import { FaWhatsapp } from "react-icons/fa";
 import NavbarVisitor from "../components/navBarVisitor";
-import "../styles/homePage.css";
+ import "../styles/homePage.css";
 import { FaMapMarkerAlt,  FaEnvelope, FaClock, FaPhone } from "react-icons/fa";
 
 

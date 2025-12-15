@@ -1,8 +1,10 @@
 "use client"
-import { FaUser, FaBuilding, FaEnvelope, FaLock } from "react-icons/fa";
 
 import { useState } from "react"
-import "../App.css"
+import { FaUser, FaBuilding, FaEnvelope, FaLock } from "react-icons/fa"
+
+import "../App.css" // global styles (OK)
+import styles from "../styles/signUp.module.css" 
 
 export default function SignupForm() {
   const [accountType, setAccountType] = useState("volunteer")
@@ -89,146 +91,182 @@ export default function SignupForm() {
   }
 
   return (
-    <div className="form-section">
-      <div className="form-container">
-        {/* header */}
-        <div className="form-header">
-          <h2>Create Account</h2>
-          <p>One Step Away from Something Great!</p>
-        </div>
-
-        {/* google signup button */}
-     <button onClick={handleGoogleSignup} className="google-button">
-  <img 
-    src="/google.webp" 
-    alt="Google" 
-    className="google-icon"
-  />
-  Continue with Google
-</button>
-
-        {/* qccount type Tabs */}
-        <div className="tabs-container">
-          <button
-            onClick={() => setAccountType("volunteer")}
-            className={`tab-button ${accountType === "volunteer" ? "active" : "inactive"}`}
-          >
-            Volunteer
-          </button>
-          <button
-            onClick={() => setAccountType("organization")}
-            className={`tab-button ${accountType === "organization" ? "active" : "inactive"}`}
-          >
-            Organization
-          </button>
-        </div>
-
-        {/* form */}
-        <form onSubmit={handleSubmit}>
-         {/* volunteer fields */}
-{accountType === "volunteer" && (
-  <div className="form-row">
-    <div className="form-group">
-      <div className="input-wrapper">
-        <FaUser className="input-icon" />
-        <input
-          type="text"
-          name="firstName"
-          placeholder=".    first name"
-          value={formData.firstName}
-          onChange={handleInputChange}
-          className="form-input"
-        />
-      </div>
-      {errors.firstName && <p className="error-message">{errors.firstName}</p>}
+   <div className={styles["form-section"]}>
+  <div className={styles["form-container"]}>
+    {/* header */}
+    <div className={styles["form-header"]}>
+      <h2>Create Account</h2>
+      <p>One Step Away from Something Great!</p>
     </div>
 
-    <div className="form-group">
-      <div className="input-wrapper">
-        <FaUser className="input-icon" />
-        <input
-          type="text"
-          name="familyName"
-          placeholder=".      family name"
-          value={formData.familyName}
-          onChange={handleInputChange}
-          className="form-input"
-        />
-      </div>
-      {errors.familyName && <p className="error-message">{errors.familyName}</p>}
-    </div>
-  </div>
-)}
-
-{/* organization field */}
-{accountType === "organization" && (
-  <div className="form-group">
-    <div className="input-wrapper">
-      <FaBuilding className="input-icon" />
-      <input
-        type="text"
-        name="organizationName"
-        placeholder=".     organization name"
-        value={formData.organizationName}
-        onChange={handleInputChange}
-        className="form-input"
+    {/* google signup button */}
+    <button
+      onClick={handleGoogleSignup}
+      className={styles["google-button"]}
+    >
+      <img
+        src="/google.webp"
+        alt="Google"
+        className={styles["google-icon"]}
       />
+      Continue with Google
+    </button>
+
+    {/* account type Tabs */}
+    <div className={styles["tabs-container"]}>
+      <button
+        onClick={() => setAccountType("volunteer")}
+        className={`${styles["tab-button"]} ${
+          accountType === "volunteer"
+            ? styles.active
+            : styles.inactive
+        }`}
+      >
+        Volunteer
+      </button>
+
+      <button
+        onClick={() => setAccountType("organization")}
+        className={`${styles["tab-button"]} ${
+          accountType === "organization"
+            ? styles.active
+            : styles.inactive
+        }`}
+      >
+        Organization
+      </button>
     </div>
-    {errors.organizationName && <p className="error-message">{errors.organizationName}</p>}
-  </div>
-)}
 
-{/* email field */}
-<div className="form-group">
-  <div className="input-wrapper">
-    <FaEnvelope className="input-icon" />
-    <input
-      type="email"
-      name="email"
-      placeholder=".    Email"
-      value={formData.email}
-      onChange={handleInputChange}
-      className="form-input"
-    />
-  </div>
-  {errors.email && <p className="error-message">{errors.email}</p>}
-</div>
-
-{/* password field */}
-<div className="form-group">
-  <div className="input-wrapper">
-    <FaLock className="input-icon" />
-    <input
-      type="password"
-      name="password"
-      placeholder=".    password"
-      value={formData.password}
-      onChange={handleInputChange}
-      className="form-input"
-    />
-  </div>
-  {errors.password && <p className="error-message">{errors.password}</p>}
-</div>
-
-
-          {/* password requirements */}
-          <div className="password-requirements">
-            <span>password must be at least 8 characters long</span>
-            <a href="#" className="forgot-link">
-              Forgot password?
-            </a>
+    {/* form */}
+    <form onSubmit={handleSubmit}>
+      {accountType === "volunteer" && (
+        <div className={styles["form-row"]}>
+          <div className={styles["form-group"]}>
+            <div className={styles["input-wrapper"]}>
+              <FaUser className={styles["input-icon"]} />
+              <input
+                type="text"
+                name="firstName"
+                placeholder="first name"
+                value={formData.firstName}
+                onChange={handleInputChange}
+                className={styles["form-input"]}
+              />
+            </div>
+            {errors.firstName && (
+              <p className={styles["error-message"]}>
+                {errors.firstName}
+              </p>
+            )}
           </div>
 
-          {/* sign up yutton */}
-          <button type="submit" disabled={isLoading} className="submit-button">
-            {isLoading ? "Creating account..." : "Sign up"}
-            <svg className="button-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="5" y1="12" x2="19" y2="12" />
-              <polyline points="12 5 19 12 12 19" />
-            </svg>
-          </button>
-        </form>
+          <div className={styles["form-group"]}>
+            <div className={styles["input-wrapper"]}>
+              <FaUser className={styles["input-icon"]} />
+              <input
+                type="text"
+                name="familyName"
+                placeholder="family name"
+                value={formData.familyName}
+                onChange={handleInputChange}
+                className={styles["form-input"]}
+              />
+            </div>
+            {errors.familyName && (
+              <p className={styles["error-message"]}>
+                {errors.familyName}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {accountType === "organization" && (
+        <div className={styles["form-group"]}>
+          <div className={styles["input-wrapper"]}>
+            <FaBuilding className={styles["input-icon"]} />
+            <input
+              type="text"
+              name="organizationName"
+              placeholder="organization name"
+              value={formData.organizationName}
+              onChange={handleInputChange}
+              className={styles["form-input"]}
+            />
+          </div>
+          {errors.organizationName && (
+            <p className={styles["error-message"]}>
+              {errors.organizationName}
+            </p>
+          )}
+        </div>
+      )}
+
+      <div className={styles["form-group"]}>
+        <div className={styles["input-wrapper"]}>
+          <FaEnvelope className={styles["input-icon"]} />
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            value={formData.email}
+            onChange={handleInputChange}
+            className={styles["form-input"]}
+          />
+        </div>
+        {errors.email && (
+          <p className={styles["error-message"]}>
+            {errors.email}
+          </p>
+        )}
       </div>
-    </div>
+
+      <div className={styles["form-group"]}>
+        <div className={styles["input-wrapper"]}>
+          <FaLock className={styles["input-icon"]} />
+          <input
+            type="password"
+            name="password"
+            placeholder="password"
+            value={formData.password}
+            onChange={handleInputChange}
+            className={styles["form-input"]}
+          />
+        </div>
+        {errors.password && (
+          <p className={styles["error-message"]}>
+            {errors.password}
+          </p>
+        )}
+      </div>
+
+      <div className={styles["password-requirements"]}>
+        <span>password must be at least 8 characters long</span>
+        <a href="#" className={styles["forgot-link"]}>
+          Forgot password?
+        </a>
+      </div>
+
+      <button
+        type="submit"
+        disabled={isLoading}
+        className={styles["submit-button"]}
+      >
+        {isLoading ? "Creating account..." : "Sign up"}
+        <svg
+          className={styles["button-arrow"]}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <line x1="5" y1="12" x2="19" y2="12" />
+          <polyline points="12 5 19 12 12 19" />
+        </svg>
+      </button>
+    </form>
+  </div>
+</div>
+
   )
 }
