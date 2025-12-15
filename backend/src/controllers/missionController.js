@@ -122,3 +122,66 @@ exports.deleteMission = async (req, res) => {
     res.status(500).json({ message: "Error deleting mission" });
   }
 };
+
+// Get all applicants for a mission (organization only)
+exports.getMissionApplicants = async (req, res) => {
+  try {
+    const missionId = Number(req.params.id); // mission ID from URL
+    const orgId = req.user.id; // organization ID from auth middleware
+
+    // Find the mission with its applications
+    const mission = await prisma.mission.findUnique({
+      where: { id: missionId },
+      include: {
+        applications: {
+          include: {
+            volunteer: true, // include volunteer info for each application
+          }
+        }
+      }
+    });
+
+    if (!mission) {
+      return res.status(404).json({ message: "Mission not found" });
+    }
+
+    // Only allow the organization that owns the mission
+    if (mission.organizationId !== orgId) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    // Return the list of applications
+    res.json(mission.applications);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error fetching applicants", error });
+  }
+};
+
+
+// Approve or reject an applicant
+exports.updateApplicationStatus = async (req, res) => {
+  try {
+    const { status } = req.body; // "approved" or "rejected"
+    const applicationId = Number(req.params.applicationId);
+    const orgId = req.user.id;
+
+    const application = await prisma.application.findUnique({
+      where: { id: applicationId },
+      include: { mission: true }
+    });
+
+    if (!application || application.mission.organizationId !== orgId) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    const updated = await prisma.application.update({
+      where: { id: applicationId },
+      data: { status }
+    });
+
+    res.json({ message: `Application ${status}`, updated });
+  } catch (error) {
+    res.status(500).json({ message: "Error updating application status", error });
+  }
+};
