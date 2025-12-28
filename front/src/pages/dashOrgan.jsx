@@ -6,7 +6,7 @@ import Missions from "../components/dash_missions"
 import Volunteers from "../components/dash_volunteers"
 import Notifications from "../components/dash_notifications"
 
-import styles from "../styles/dashOrg.module.css" // ✅ CSS Module
+import styles from "../styles/dashOrg.module.css" 
 
 export default function Dashboard() {
   const [currentPage, setCurrentPage] = useState("profile")
