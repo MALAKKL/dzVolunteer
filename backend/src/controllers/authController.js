@@ -1,10 +1,12 @@
 require("dotenv").config();
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
+const { OAuth2Client } = require("google-auth-library");
 
-// Use JWT secret from .env
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const JWT_SECRET = process.env.JWT_SECRET;
 
 // ========================
@@ -14,34 +16,30 @@ exports.registerVolunteer = async (req, res) => {
   try {
     const { firstName, lastName, email, password } = req.body;
 
+    if (!firstName || !lastName || !email || !password) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ message: "Password must be at least 8 characters" });
+    }
+
     const exists = await prisma.volunteer.findUnique({ where: { email } });
-    if (exists) {
-      return res.status(400).json({ message: "Email already exists" });
-    }
+    if (exists) return res.status(400).json({ message: "Email already exists" });
 
-    if (!password || password.length < 8) {
-      return res.status(400).json({
-        message: "Password must be at least 8 characters long",
-      });
-    }
-
-    const hashed = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const volunteer = await prisma.volunteer.create({
-      data: { firstName, lastName, email, password: hashed },
+      data: { firstName, lastName, email, password: hashedPassword },
     });
 
     const { password: _, ...safeVolunteer } = volunteer;
 
-    res.status(201).json({
-      message: "Volunteer registered",
-      volunteer: safeVolunteer,
-    });
+    res.status(201).json({ message: "Volunteer registered", volunteer: safeVolunteer });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
-
 
 // ========================
 // REGISTER ORGANIZATION
@@ -50,43 +48,41 @@ exports.registerOrganization = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ message: "Password must be at least 8 characters" });
+    }
+
     const exists = await prisma.organization.findUnique({ where: { email } });
-    if (exists) {
-      return res.status(400).json({ message: "Email already exists" });
-    }
+    if (exists) return res.status(400).json({ message: "Email already exists" });
 
-    if (!password || password.length < 8) {
-      return res.status(400).json({
-        message: "Password must be at least 8 characters long",
-      });
-    }
-
-    const hashed = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const org = await prisma.organization.create({
-      data: { name, email, password: hashed },
+      data: { name, email, password: hashedPassword },
     });
 
     const { password: _, ...safeOrg } = org;
 
-    res.status(201).json({
-      message: "Organization registered",
-      organization: safeOrg,
-    });
+    res.status(201).json({ message: "Organization registered", organization: safeOrg });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-
-
 // ========================
-// LOGIN (volunteer or organization)
+// LOGIN (VOLUNTEER / ORG / ADMIN)
 // ========================
-// LOGIN
 exports.login = async (req, res) => {
   try {
     const { email, password, role } = req.body;
+
+    if (!email || !password || !role) {
+      return res.status(400).json({ message: "Email, password and role are required" });
+    }
 
     // ADMIN LOGIN
     if (email === process.env.ADMIN_EMAIL) {
@@ -94,20 +90,11 @@ exports.login = async (req, res) => {
         return res.status(401).json({ message: "Invalid admin credentials" });
       }
 
-      const token = jwt.sign(
-        { id: "admin", role: "admin" },
-        JWT_SECRET,
-        { expiresIn: "7d" }
-      );
+      const token = jwt.sign({ id: "admin", role: "admin" }, JWT_SECRET, { expiresIn: "7d" });
 
-      return res.json({
-        message: "Admin logged in",
-        token,
-        user: { email, role: "admin" },
-      });
+      return res.json({ message: "Admin logged in", token, user: { email, role: "admin" } });
     }
 
-    // NORMAL USERS
     if (!["volunteer", "organization"].includes(role)) {
       return res.status(400).json({ message: "Invalid role" });
     }
@@ -122,130 +109,128 @@ exports.login = async (req, res) => {
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(400).json({ message: "Invalid credentials" });
 
-    const token = jwt.sign(
-      { id: user.id, role },
-      JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
+    const token = jwt.sign({ id: user.id, role }, JWT_SECRET, { expiresIn: "7d" });
     const { password: _, ...safeUser } = user;
 
-    res.json({ token, user: safeUser });
+    res.json({ message: "Login successful", token, user: safeUser });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-//forgot password
-const crypto = require("crypto");
+// ========================
+// GOOGLE AUTH (VOLUNTEER / ORG)
+// ========================
+exports.googleAuth = async (req, res) => {
+  try {
+    const { credential, role } = req.body;
 
-exports.forgotPassword = async (req, res) => {
-  const { email, role } = req.body;
+    if (!credential || !role) return res.status(400).json({ message: "Credential and role required" });
+    if (!["volunteer", "organization"].includes(role)) return res.status(400).json({ message: "Invalid role" });
 
-  if (!["volunteer", "organization"].includes(role)) {
-    return res.status(400).json({ message: "Invalid role" });
-  }
-
-  const user =
-    role === "volunteer"
-      ? await prisma.volunteer.findUnique({ where: { email } })
-      : await prisma.organization.findUnique({ where: { email } });
-
-  if (!user) {
-    return res.status(404).json({ message: "User not found" });
-  }
-
-  // Generate token
-  const resetToken = crypto.randomBytes(32).toString("hex");
-
-  // Hash token before saving
-  const hashedToken = crypto
-    .createHash("sha256")
-    .update(resetToken)
-    .digest("hex");
-
-  const expiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
-
-  if (role === "volunteer") {
-    await prisma.volunteer.update({
-      where: { email },
-      data: {
-        resetToken: hashedToken,
-        resetTokenExpiry: expiry,
-      },
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
     });
-  } else {
-    await prisma.organization.update({
-      where: { email },
-      data: {
-        resetToken: hashedToken,
-        resetTokenExpiry: expiry,
-      },
-    });
-  }
 
-  // TEMP: return token (later you send email)
-  res.json({
-    message: "Password reset token generated",
-    resetToken,
-  });
+    const payload = ticket.getPayload();
+    const email = payload.email;
+    const firstName = payload.given_name;
+    const lastName = payload.family_name;
+    const avatarUrl = payload.picture;
+    const googleId = payload.sub;
+
+    let user =
+      role === "volunteer"
+        ? await prisma.volunteer.findFirst({ where: { email } })
+        : await prisma.organization.findFirst({ where: { email } });
+
+    if (!user) {
+      // Create new user
+      if (role === "volunteer") {
+        user = await prisma.volunteer.create({
+          data: { firstName, lastName, email, googleId, avatarUrl },
+        });
+      } else {
+        user = await prisma.organization.create({
+          data: { name: firstName + " " + lastName, email, googleId, avatarUrl },
+        });
+      }
+    }
+
+    const token = jwt.sign({ id: user.id, role }, JWT_SECRET, { expiresIn: "7d" });
+    const { password: _, ...safeUser } = user;
+
+    res.json({ message: "Google login successful", token, user: safeUser });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
-//reset password
+// ========================
+// FORGOT PASSWORD
+// ========================
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email, role } = req.body;
+    if (!email || !role || !["volunteer", "organization"].includes(role))
+      return res.status(400).json({ message: "Invalid request" });
+
+    const user =
+      role === "volunteer"
+        ? await prisma.volunteer.findUnique({ where: { email } })
+        : await prisma.organization.findUnique({ where: { email } });
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+    const expiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+    if (role === "volunteer") {
+      await prisma.volunteer.update({ where: { email }, data: { resetToken: hashedToken, resetTokenExpiry: expiry } });
+    } else {
+      await prisma.organization.update({ where: { email }, data: { resetToken: hashedToken, resetTokenExpiry: expiry } });
+    }
+
+    // TODO: send email with resetToken
+    res.json({ message: "Password reset token generated", resetToken });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ========================
+// RESET PASSWORD
+// ========================
 exports.resetPassword = async (req, res) => {
-  const { token, newPassword, role } = req.body;
+  try {
+    const { token, newPassword, role } = req.body;
 
-  if (newPassword.length < 8) {
-    return res.status(400).json({
-      message: "Password must be at least 8 characters long",
-    });
+    if (!token || !newPassword || !role || !["volunteer", "organization"].includes(role))
+      return res.status(400).json({ message: "Invalid request" });
+
+    if (newPassword.length < 8) return res.status(400).json({ message: "Password must be at least 8 characters" });
+
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    const user =
+      role === "volunteer"
+        ? await prisma.volunteer.findFirst({ where: { resetToken: hashedToken, resetTokenExpiry: { gt: new Date() } } })
+        : await prisma.organization.findFirst({ where: { resetToken: hashedToken, resetTokenExpiry: { gt: new Date() } } });
+
+    if (!user) return res.status(400).json({ message: "Token invalid or expired" });
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    if (role === "volunteer") {
+      await prisma.volunteer.update({ where: { id: user.id }, data: { password: hashedPassword, resetToken: null, resetTokenExpiry: null } });
+    } else {
+      await prisma.organization.update({ where: { id: user.id }, data: { password: hashedPassword, resetToken: null, resetTokenExpiry: null } });
+    }
+
+    res.json({ message: "Password reset successful" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-
-  const hashedToken = crypto
-    .createHash("sha256")
-    .update(token)
-    .digest("hex");
-
-  const user =
-    role === "volunteer"
-      ? await prisma.volunteer.findFirst({
-          where: {
-            resetToken: hashedToken,
-            resetTokenExpiry: { gt: new Date() },
-          },
-        })
-      : await prisma.organization.findFirst({
-          where: {
-            resetToken: hashedToken,
-            resetTokenExpiry: { gt: new Date() },
-          },
-        });
-
-  if (!user) {
-    return res.status(400).json({ message: "Token invalid or expired" });
-  }
-
-  const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-  if (role === "volunteer") {
-    await prisma.volunteer.update({
-      where: { id: user.id },
-      data: {
-        password: hashedPassword,
-        resetToken: null,
-        resetTokenExpiry: null,
-      },
-    });
-  } else {
-    await prisma.organization.update({
-      where: { id: user.id },
-      data: {
-        password: hashedPassword,
-        resetToken: null,
-        resetTokenExpiry: null,
-      },
-    });
-  }
-
-  res.json({ message: "Password reset successful" });
 };
