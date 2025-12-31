@@ -1,0 +1,491 @@
+/* =========================
+   RESET & BASE STYLES
+========================= */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background-color: #ffffff;
+  color: #2c2c2c;
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* =========================
+   HEADER
+========================= */
+.header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 40px;
+  background-color: #347362;
+  color: white;
+  height: 80px;
+  height: 80px;
+  position: relative;    /* keep it in flow */
+  box-sizing: border-box;
+}
+
+.logo {
+  display: flex;
+  align-items: center; /* keeps image vertically centered */
+  gap: 0;              /* no gap needed if only image */
+}
+
+
+/* Logo image */
+.logo-img {
+  width: 155px;  /* adjust width as needed */
+  height: auto;  /* keeps aspect ratio */
+  display: block;
+}
+
+
+.nav {
+  display: flex;
+  gap: 30px;
+}
+
+.nav a {
+  color: white;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.nav a:hover {
+  opacity: 0.8;
+}
+
+.nav a.active {
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.profile img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* =========================
+   HERO SECTION
+========================= */
+.hero {
+  width: 100%;
+  padding: 50px 40px;
+  background-color: #f5f1e8;
+}
+
+.hero-content {
+  display: flex;
+  gap: 60px;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.hero-image {
+  position: relative;
+  flex: 1;
+}
+
+.hero-image img {
+  width: 100%;
+  max-width: 400px;
+}
+
+.decoration-leaf {
+  position: absolute;
+  top: -20px;
+  left: -30px;
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #347362);
+  border-radius: 0 60% 0 60%;
+  opacity: 0.6;
+}
+
+.hero-text {
+  flex: 1;
+  position: relative;
+}
+
+.hero-text h1 {
+  font-size: 52px;
+  color: #347362;
+  margin-bottom: 20px;
+}
+
+.hero-text p {
+  font-size: 25px;
+  margin-bottom: 20px;
+}
+
+/* =========================
+   SOCIAL ICONS
+========================= */
+.social-icons {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.social-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4a7c6e;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  transition: all 0.25s ease;
+}
+
+.social-icon:hover {
+  background-color: #4a7c6e;
+  color: #ffffff;
+  transform: translateY(-3px);
+}
+
+
+/* =========================
+   SEARCH BAR
+========================= */
+.search-bar input {
+  width: 150%;
+  max-width: 400px;
+  padding: 12px 20px;
+  border: 2px solid #347362;
+  font-size: 16px;
+  border-radius: 25px;
+  outline: none;
+}
+
+.search-bar input:focus {
+  border-color: #347362;
+}
+
+.search-bar input::placeholder {
+  font-size: 16px;
+}
+
+
+/* =========================
+   EXPLORE MISSIONS
+========================= */
+.explore-missions {
+  padding: 60px 40px;
+  text-align: center;
+}
+
+.explore-missions h2 {
+  font-size: 42px;
+  color: #347362;
+  margin-bottom: 30px;
+}
+
+.categories {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.categories button {
+  padding: 12px 30px;
+  border: 2px solid #347362;
+  background: white;
+  color: #347362;
+  border-radius: 25px;
+  cursor: pointer;
+}
+
+.categories button.active,
+.categories button:hover {
+  background-color: #FFFAF5
+}
+
+/* =========================
+   MISSION CARD
+========================= */
+.mission-card {
+  display: flex;
+  background: linear-gradient(135deg, #5a9c8e, #347362);
+  border-radius: 30px;
+  overflow: hidden;
+  margin: 30px auto;
+  max-width: 900px;
+}
+
+.mission-image {
+  flex: 1;
+  padding: 20px;
+}
+
+.mission-image img {
+  width: 100%;
+  border-radius: 20px;
+}
+
+.mission-details {
+  flex: 1;
+  padding: 40px;
+  color: white;
+}
+
+.see-more {
+  padding: 10px 30px;
+  background: white;
+  color: #347362;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+
+/* Mission slider arrows below the card */
+.slider-controls {
+  display: flex;
+  justify-content: center; /* center horizontally */
+  gap: 20px; /* space between arrows */
+  margin-top: 20px; /* distance from the mission card */
+  margin-bottom: 80px;
+}
+
+.slider-btn {
+  background-color: #4a7c6e; /* your chosen color */
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.slider-btn:hover {
+  background-color: #347362; /* darker on hover */
+
+}
+
+
+/* =========================
+   ORGANIZATIONS
+========================= */
+.best-organizations {
+  padding: 80px 40px;
+  background-color: #f5f1e8; /* 👈 section background */
+  text-align: center;
+}
+
+/* Main title */
+.best-title {
+  font-size: 48px;        /* bigger */
+  color: #347362;
+  margin-bottom: 20px;
+}
+
+/* Subtitle */
+.best-subtitle {
+  font-size: 22px;        /* smaller than title */
+  color: #2c2c2c;
+  margin-bottom: 60px;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Grid */
+.organizations-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Cards */
+.org-card {
+  background: white;
+  border-radius: 20px;
+  padding: 25px;
+  text-align: left; /* card content stays readable */
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* Category */
+.org-category {
+  font-size: 14px;
+  font-weight: 600;
+  color: #347362;
+  margin-bottom: 8px;
+}
+
+/* Titles */
+.org-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.org-subtitle {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 15px;
+}
+
+/* Image */
+.org-image {
+  height: 200px;
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+.org-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+
+
+/* =========================
+   FOOTER
+========================= */
+.footer {
+  background-color: #347362;
+  color: white;
+  padding: 40px 60px;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: 40px;
+}
+
+/* Contact button */
+.contact-btn {
+  padding: 12px 26px;
+  border-radius: 25px;
+  border: none;
+  background-color: white;
+  color: #347362;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.contact-btn:hover {
+  background-color: #f5f1e8;
+}
+
+/* Footer info */
+.footer-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.footer-info .phone,
+.footer-info .email {
+  font-size: 15px;        /* BIGGER */
+  font-weight: 500;       /* THICKER */
+  letter-spacing: 0.4px; /* cleaner look */
+}
+
+/* =========================
+   FOOTER ICONS
+========================= */
+.footer-icons {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.footer-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4a7c6e;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  transition: all 0.25s ease;
+}
+
+.footer-icon:hover {
+  background-color: #4a7c6e;
+  color: #ffffff;
+  transform: translateY(-3px);
+}
+
+
+
+
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 1024px) {
+  .organizations-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .hero-content {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 768px) {
+  .mission-card {
+    flex-direction: column;
+  }
+
+  .organizations-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .footer-content {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .hero-text h1 {
+    font-size: 36px;
+  }
+}
