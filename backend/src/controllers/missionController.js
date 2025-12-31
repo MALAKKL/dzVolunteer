@@ -1,37 +1,36 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-// Create a mission (organization only)
+// Create mission with skills & SDG
 exports.createMission = async (req, res) => {
   try {
-    const { title, description, location, date, slots, skillsRequired } = req.body;
-
-    const orgId = req.user.id; // from auth middleware
+    const organizationId = req.user.organization.id; // from auth middleware
+    const { title, description, location, startDate, endDate, volunteersNeeded, skills, sdgId } = req.body;
 
     const mission = await prisma.mission.create({
       data: {
+        organizationId,
         title,
         description,
         location,
-        date: new Date(date),
-        slots,
-        organizationId: orgId,
-
-        // skillsRequired = [1,2,3]
-        skillsRequired: {
-          connect: skillsRequired?.map((id) => ({ id })),
-        },
+        startDate: new Date(startDate),
+        endDate: new Date(endDate),
+        volunteersNeeded,
+        sdgId,
+        skills: {
+          create: skills.map(s => ({
+            skillId: s.skillId,
+            mustBeVerified: s.mustBeVerified || false,
+            levelRequired: s.levelRequired || null
+          }))
+        }
       },
-      include: {
-        skillsRequired: true,
-        organization: true,
-      },
+      include: { skills: true }
     });
 
-    res.status(201).json(mission);
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Error creating mission" });
+    res.status(201).json({ message: "Mission created", mission });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
 
