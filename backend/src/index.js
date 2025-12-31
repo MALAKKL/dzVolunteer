@@ -21,6 +21,8 @@ app.use(cors());
 const authRoutes = require("./routes/authRoutes");
 const missionRoutesOrg = require("./routes/missionRoutesOrg");
 const missionRoutesPublic = require("./routes/missionRoutesPublic");
+const organizationRoutes = require("./routes/organizationRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 
 // Public mission routes
 app.use("/api/missions", missionRoutesPublic);
@@ -28,8 +30,14 @@ app.use("/api/missions", missionRoutesPublic);
 // Organization-only mission routes
 app.use("/api/organization/missions", missionRoutesOrg);
 
-// Routes
+// Organization routes (view/update)
+app.use("/api/organizations", organizationRoutes);
+
+// Auth routes
 app.use("/api/auth", authRoutes);
+
+// Admin routes
+app.use("/api/admin", adminRoutes);
 
 // Test route
 app.get("/", (req, res) => {

@@ -1,23 +1,27 @@
-// src/routes/authRoutes.js
 const express = require("express");
 const router = express.Router();
-const { registerVolunteer, registerOrganization, login } = require("../controllers/authController");
 
-// Volunteer routes
-router.post("/volunteer/register", registerVolunteer);
-router.post("/volunteer/login", (req, res) => {
-  req.body.role = "volunteer"; // force role
-  login(req, res);
-});
+const {
+  register,
+  login,
+  adminLogin,
+  getProfile,
+  googleAuth,
+  forgotPassword,
+  resetPassword,
+} = require("../controllers/authController");
 
-// Organization routes
-router.post("/organization/register", registerOrganization);
-router.post("/organization/login", (req, res) => {
-  req.body.role = "organization"; // force role
-  login(req, res);
-});
+const { authenticate } = require("../middleware/authMiddleware");
 
-router.post("/forgot-password", authController.forgotPassword);
-router.post("/reset-password", authController.resetPassword);
+// Public routes
+router.post("/register", register);
+router.post("/login", login);
+router.post("/admin/login", adminLogin);
+router.post("/google", googleAuth);
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPassword);
+
+// Protected routes
+router.get("/profile", authenticate, getProfile);
 
 module.exports = router;

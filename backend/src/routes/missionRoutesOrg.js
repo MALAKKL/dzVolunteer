@@ -1,20 +1,26 @@
 const express = require("express");
 const router = express.Router();
 const { createMission, updateMission, deleteMission } = require("../controllers/missionController");
-const { protect } = require("../middleware/authMiddleware");
-const { isOrganization } = require("../middleware/roleMiddleware");
+const { authenticate, authorize} = require("../middleware/authMiddleware");
 const { getMissionApplicants, updateApplicationStatus } = require("../controllers/missionController");
 
+// All routes require authentication + ORGANIZATION role
+router.use(authenticate, authorize("ORGANIZATION"));
 
-// Organization-only routes
-router.post("/", protect, isOrganization, createMission);
-router.put("/:id", protect, isOrganization, updateMission);
-router.delete("/:id", protect, isOrganization, deleteMission);
+// Create a mission
+router.post("/", createMission);
 
+// Update a mission
+router.put("/:id", updateMission);
 
-// Organization-only
-router.get("/:id/applicants", protect, isOrganization, getMissionApplicants);
-router.put("/applications/:applicationId", protect, isOrganization, updateApplicationStatus);
+// Delete a mission
+router.delete("/:id", deleteMission);
 
+// Get applicants for a mission
+router.get("/:id/applicants", getMissionApplicants);
+
+// Approve/reject application
+router.put("/applications/:applicationId", updateApplicationStatus);
 
 module.exports = router;
+
