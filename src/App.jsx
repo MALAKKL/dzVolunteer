@@ -8,7 +8,8 @@ function App() {
     <Routes>
       <Route path="/" element={<MissionPage />} />
       <Route path="/missions" element={<MissionsPage />} />
-      <Route path="/missioncard" element={<MissionCardPage />} />
+      <Route path="/missioncard/:id" element={<MissionCardPage />} />
+
     </Routes>
   );
 }

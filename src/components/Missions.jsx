@@ -3,52 +3,9 @@
 
 import { useState } from "react";
 import "./Missions.css";
+import { WhatsappIcon, InstagramIcon, FacebookIcon, LinkedinIcon } from "./SocialIcons";
+import { Link } from "react-router-dom";
 
-
-const InstagramIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-    width="20" height="20" fill="none" stroke="currentColor"
-    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
-  </svg>
-);
-
-const FacebookIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-    width="20" height="20" fill="none" stroke="currentColor"
-    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
-  </svg>
-);
-
-const TwitterIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-    width="20" height="20" fill="none" stroke="currentColor"
-    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6
-      2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5
-      c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8
-      1.1 0 3-1.2 3-1.2z" />
-  </svg>
-);
-
-const YoutubeIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-    width="20" height="20" fill="none" stroke="currentColor"
-    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2
-      C18.88 4 12 4 12 4s-6.88 0-8.6.46
-      a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75
-      a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19
-      c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46
-      a2.78 2.78 0 0 0 1.94-2
-      a29 29 0 0 0 .46-5.25
-      a29 29 0 0 0-.46-5.33z" />
-    <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" />
-  </svg>
-);
 
 
 
@@ -191,12 +148,20 @@ export default function Missions() {
               Starts With <span className="highlight">Purpose</span>
             </h1>
             <p>Step into the heart of our work and discover the impact we're creating together</p>
-            <div className="social-icons">
-              <a href="#" className="social-icon"><InstagramIcon /></a>
-              <a href="#" className="social-icon"><FacebookIcon /></a>
-              <a href="#" className="social-icon"><TwitterIcon /></a>
-              <a href="#" className="social-icon"><YoutubeIcon /></a>
-           </div>
+            <div className="social-links">
+               <a href="#" className="social-icon" aria-label="WhatsApp">
+                <WhatsappIcon />
+               </a>
+               <a href="#" className="social-icon" aria-label="Instagram">
+               <InstagramIcon />
+               </a>
+               <a href="#" className="social-icon" aria-label="Facebook">
+               <FacebookIcon />
+               </a>
+               <a href="#" className="social-icon" aria-label="LinkedIn">
+                <LinkedinIcon />
+               </a>
+             </div>
 
             <div className="search-bar">
               <input type="text" placeholder="search for a mission" />
@@ -236,7 +201,10 @@ export default function Missions() {
                   <p className="mission-description">{missions[currentSlide].description}</p>
                   <p className="mission-number">{missions[currentSlide].number}</p>
                   <p className="mission-location">{missions[currentSlide].location}</p>
-                 <button className="see-more">see more</button>
+                 <Link to={`/missioncard/${missions[currentSlide].id}`} className="see-more">
+                   see more
+                 </Link>
+
                     </div>
              </div> 
               <div className="slider-controls">
@@ -295,12 +263,20 @@ export default function Missions() {
 
           
 
-            <div className="footer-icons">
-              <a href="#" className="footer-icon"><InstagramIcon /></a>
-              <a href="#" className="footer-icon"><FacebookIcon /></a>
-              <a href="#" className="footer-icon"><TwitterIcon /></a>
-              <a href="#" className="footer-icon"><YoutubeIcon /></a>
-           </div>
+            <div className="social-links">
+               <a href="#" className="social-icon" aria-label="WhatsApp">
+                <WhatsappIcon />
+               </a>
+               <a href="#" className="social-icon" aria-label="Instagram">
+               <InstagramIcon />
+               </a>
+               <a href="#" className="social-icon" aria-label="Facebook">
+               <FacebookIcon />
+               </a>
+               <a href="#" className="social-icon" aria-label="LinkedIn">
+                <LinkedinIcon />
+               </a>
+             </div>
 
         </div>
       </footer>

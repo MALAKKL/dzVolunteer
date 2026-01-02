@@ -182,6 +182,7 @@ body {
   font-size: 16px;
   border-radius: 25px;
   outline: none;
+  margin-top: 20px;
 }
 
 .search-bar input:focus {
@@ -254,16 +255,28 @@ body {
   flex: 1;
   padding: 40px;
   color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* make everything stack naturally */
 }
 
+
 .see-more {
-  padding: 10px 30px;
+  padding: 6px 20px;       /* compact padding */
   background: white;
   color: #347362;
   border: none;
-  border-radius: 20px;
+  border-radius: 12px;
   cursor: pointer;
+  margin-top: 12px;        /* spacing from location */
+  display: inline-block;   /* shrink to content */
+  font-size: 14px;
+  font-weight: 500;
+  width: auto;             /* important: don't stretch */
+  text-align: center;
 }
+
+
 
 
 /* Mission slider arrows below the card */
@@ -271,7 +284,7 @@ body {
   display: flex;
   justify-content: center; /* center horizontally */
   gap: 20px; /* space between arrows */
-  margin-top: 20px; /* distance from the mission card */
+  margin-top: 30px; /* distance from the mission card */
   margin-bottom: 80px;
 }
 
@@ -428,31 +441,34 @@ body {
 /* =========================
    FOOTER ICONS
 ========================= */
-.footer-icons {
+.social-links {
   display: flex;
   gap: 16px;
-  margin-bottom: 20px;
+  margin-top: 24px;
+  align-items: center;
 }
 
-.footer-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background-color: #ffffff;
+.social-icon {
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #4a7c6e;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
-  transition: all 0.25s ease;
+  color: #347362;
+  text-decoration: none;
+  transition: color 0.3s ease, transform 0.2s ease;
+  cursor: pointer;
 }
 
-.footer-icon:hover {
-  background-color: #4a7c6e;
-  color: #ffffff;
-  transform: translateY(-3px);
+.social-icon:hover {
+  color: #347362;
+  transform: scale(1.1);
 }
 
+.social-icon svg {
+  width: 100%;
+  height: 100%;
+}
 
 
 

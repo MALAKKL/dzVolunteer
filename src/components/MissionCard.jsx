@@ -2,46 +2,49 @@
 import "./MissionCard.css";
 import { WhatsappIcon, InstagramIcon, FacebookIcon, LinkedinIcon } from "./SocialIcons";
 
-function MissionCard() {
+function MissionCard({ mission }) {
+  if (!mission) return <p>Loading mission...</p>; // safety check
+
   return (
     <div className="project-card">
       <div className="card-image">
         <img
-          src="/mp2.png" // replace with your /mp2.png later
-          alt="Planting 1 Million Trees"
+          src={mission.image} // dynamic image
+          alt={mission.title}
           className="tree-image"
         />
       </div>
 
       <div className="card-content">
-        <h1 className="project-title">Planting 1 Million Trees</h1>
-        <p className="project-subtitle">khedra bidni allah</p>
+        <h1 className="project-title">{mission.title}</h1>
+        <p className="project-subtitle">{mission.organization}</p>
 
         <div className="info-section">
           <label className="info-label">DESCRIPTION</label>
-          <p className="info-text">csd,vkwwnxwwwnv,vxwxwxwxwxwxwxwxwxwxwvcvw</p>
+          <p className="info-text">{mission.description}</p>
         </div>
 
         <div className="info-section">
           <label className="info-label">LOCATION</label>
-          <p className="info-text">csd,vkwwnxwwwnv,vxwxwxwxwxwxwxwxwxwxwvcvw</p>
+          <p className="info-text">{mission.location}</p>
         </div>
 
         <div className="info-section">
           <label className="info-label">DATE RANGE</label>
-          <p className="info-text">05/12/2025 - 15/12/2025</p>
+          <p className="info-text">{mission.date}</p>
         </div>
 
         <div className="info-section">
           <label className="info-label">VOLUNTEERS NEEDED</label>
-          <p className="info-text">15 slots available</p>
+          <p className="info-text">{mission.number} slots available</p>
         </div>
 
         <div className="info-section">
           <label className="info-label">COMPETENCIES REQUIRED</label>
           <div className="competencies">
-            <span className="competency-tag">Physical Fitness</span>
-            <span className="competency-tag">Environmental Awareness</span>
+            {mission.competencies?.map((c, i) => (
+              <button key={i} className="competency-tag">{c}</button>
+            ))}
           </div>
         </div>
 
