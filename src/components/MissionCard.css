@@ -1,0 +1,143 @@
+.app-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+
+
+
+.project-card {
+  display: flex;
+  background-color: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-width: 900px;
+  width: 100%;
+}
+
+.card-image {
+  flex: 0 0 40%;
+  overflow: hidden;
+  min-height: 400px;
+}
+
+.tree-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.card-content {
+  flex: 1;
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.project-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1b6b5e;
+  margin-bottom: 8px;
+  line-height: 1.2;
+}
+
+.project-subtitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #000;
+  margin-bottom: 24px;
+}
+
+.info-section {
+  margin-bottom: 20px;
+}
+
+.info-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #1b6b5e;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.info-text {
+  font-size: 14px;
+  color: #333;
+  line-height: 1.5;
+}
+
+.competencies {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.competency-tag {
+  display: inline-block;
+  padding: 8px 16px;
+  background-color: #f0f0f0;
+  color: #333;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.social-links {
+  display: flex;
+  gap: 16px;
+  margin-top: 24px;
+  align-items: center;
+}
+
+.social-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1b6b5e;
+  text-decoration: none;
+  transition: color 0.3s ease, transform 0.2s ease;
+  cursor: pointer;
+}
+
+.social-icon:hover {
+  color: #146b56;
+  transform: scale(1.1);
+}
+
+.social-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .project-card {
+    flex-direction: column;
+  }
+
+  .card-image {
+    flex: 0 0 250px;
+  }
+
+  .card-content {
+    padding: 24px 20px;
+  }
+
+  .project-title {
+    font-size: 22px;
+  }
+
+  .info-section {
+    margin-bottom: 16px;
+  }
+}
