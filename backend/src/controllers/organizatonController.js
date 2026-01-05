@@ -95,6 +95,28 @@ exports.updateOrganization = async (req, res, next) => {
     next(error);
   }
 };
+//upload ppf
+exports.uploadOrgProfilePhoto = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    const photoPath = `/uploads/organizations/${req.file.filename}`;
+
+    await prisma.organization.update({
+      where: { userId: req.user.id },
+      data: { logo: photoPath },
+    });
+
+    res.json({
+      message: "Profile photo uploaded successfully",
+      photo: photoPath,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 
 

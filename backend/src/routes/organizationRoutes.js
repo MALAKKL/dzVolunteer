@@ -4,10 +4,23 @@ const {
   getOrganizationById,
   updateOrganization,
 } = require("../controllers/organizatonController");
+const uploadOrgPhoto = require("../middleware/uploadMiddleware");
+const { uploadOrgProfilePhoto } = require("../controllers//organizatonController");
 
 const { authenticate, authorize } = require("../middleware/authMiddleware");
 
 const router = express.Router();
+
+//uploadphoto for org
+router.put(
+  "/profile/photo",
+  authenticate,
+  authorize("ORGANIZATION"),
+  uploadOrgPhoto.single("photo"),
+  uploadOrgProfilePhoto
+);
+
+module.exports = router;
 
 // Public: view organizations
 router.get("/", getAllOrganizations);

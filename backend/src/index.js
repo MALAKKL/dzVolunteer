@@ -51,6 +51,9 @@ app.use("/api/admin", adminRoutes);
 // Public missions by SDG
 app.use("/api/sdgs", sdgRoutes);
 
+
+app.use("/uploads", express.static("uploads"));
+
 // Test route
 app.get("/", (req, res) => {
   res.send("Backend is running!");
