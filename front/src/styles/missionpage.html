@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Missions - Volunteer Admin Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --dark-teal: #0F393B;
+            --muted-teal: #347362;
+            --bright-green: #34B26A;
+            --coral: #EF8451;
+            --light-beige: #F2EBE4;
+            --cream: #F5F3EE;
+            --text-dark: #0F393B;
+            --text-light: #666;
+            --border-color: #E0D5C7;
+            --shadow: 0 2px 8px rgba(15, 57, 59, 0.08);
+            --shadow-md: 0 4px 16px rgba(15, 57, 59, 0.12);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: var(--cream);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 280px;
+            background-color: var(--dark-teal);
+            color: white;
+            padding: 2rem 1.5rem;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            color: var(--bright-green);
+        }
+
+        .nav-menu {
+            list-style: none;
+            margin-bottom: 3rem;
+        }
+
+        .nav-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .nav-link:hover {
+            background-color: rgba(52, 178, 106, 0.2);
+            color: white;
+        }
+
+        .nav-link.active {
+            background-color: var(--bright-green);
+            color: white;
+        }
+
+        .nav-icon {
+            margin-right: 0.75rem;
+            font-size: 1.2rem;
+        }
+
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            color: var(--coral);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            margin-top: auto;
+            width: 100%;
+            border-radius: 8px;
+        }
+
+        .logout-btn:hover {
+            background-color: rgba(239, 132, 81, 0.1);
+        }
+
+        /* MAIN CONTENT */
+        main {
+            margin-left: 280px;
+            flex: 1;
+            padding: 2rem;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .page-subtitle {
+            color: var(--text-light);
+            font-size: 0.95rem;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            color: var(--muted-teal);
+            background-color: var(--light-beige);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .back-btn:hover {
+            background-color: var(--bright-green);
+            color: white;
+        }
+
+        /* MISSIONS GRID */
+        .missions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .mission-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .mission-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .mission-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, var(--muted-teal), var(--bright-green));
+            object-fit: cover;
+        }
+
+        .mission-card-content {
+            padding: 1.5rem;
+        }
+
+        .mission-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .mission-description {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            line-height: 1.4;
+            display: -webkit-box;
+            /* Standard property for line clamping where supported */
+            line-clamp: 2;
+            /* WebKit-specific line clamp fallback */
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .mission-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-bottom: 1rem;
+        }
+
+        .mission-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .mission-volunteers {
+            display: inline-block;
+            background-color: var(--bright-green);
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        /* DETAIL MODAL */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            position: relative;
+            height: 250px;
+            background: linear-gradient(135deg, var(--muted-teal), var(--bright-green));
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background-color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background-color: var(--light-beige);
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .detail-section {
+            margin-bottom: 2rem;
+        }
+
+        .detail-label {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .detail-value {
+            font-size: 1rem;
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .detail-value strong {
+            color: var(--bright-green);
+        }
+
+        .competencies-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .competency-tag {
+            background-color: var(--light-beige);
+            color: var(--muted-teal);
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+
+        .modal-footer {
+            padding: 0 2rem 2rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .button-primary {
+            background-color: var(--bright-green);
+            color: white;
+            flex: 1;
+        }
+
+        .button-primary:hover {
+            background-color: #2a9e56;
+        }
+
+        .button-secondary {
+            background-color: var(--light-beige);
+            color: var(--text-dark);
+            flex: 1;
+        }
+
+        .button-secondary:hover {
+            background-color: var(--border-color);
+        }
+
+        /* EMPTY STATE */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: var(--text-light);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state-text {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* PAGINATION */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+        }
+
+        .pagination-btn {
+            padding: 0.5rem 1rem;
+            border: 2px solid var(--border-color);
+            background-color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .pagination-btn.active {
+            background-color: var(--bright-green);
+            color: white;
+            border-color: var(--bright-green);
+        }
+
+        .pagination-btn:hover {
+            border-color: var(--bright-green);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="logo">🌱 Volunteer</div>
+            <nav class="nav-menu">
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="showDashboard()">
+                        <span class="nav-icon">👤</span> Profile
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link active" onclick="showMissions()">
+                        <span class="nav-icon">🎯</span> Missions
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="showVolunteers()">
+                        <span class="nav-icon">👥</span> Volunteers
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="showNotifications()">
+                        <span class="nav-icon">🔔</span> Notifications
+                    </a>
+                </li>
+            </nav>
+            <button class="logout-btn" onclick="logout()">
+                <span class="nav-icon">🚪</span> Logout
+            </button>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main id="main-content">
+            <!-- MISSIONS OVERVIEW PAGE -->
+            <div id="missions-overview" class="page">
+                <div class="page-header">
+                    <div class="page-title">Missions Dashboard</div>
+                    <div class="page-subtitle">Manage your volunteer missions</div>
+                </div>
+
+                <button class="button button-primary" onclick="openCurrentMissionsPage()" style="margin-bottom: 1rem; background-color: var(--bright-green);">
+                    ➕ Create New Mission
+                </button>
+
+                <!-- Current Missions Preview -->
+                <div style="margin-bottom: 3rem;">
+                    <h2 style="font-size: 1.3rem; margin-bottom: 1rem; color: var(--text-dark);">Current Missions</h2>
+                    <div class="missions-grid" id="current-preview" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));">
+                        <!-- Cards will be populated -->
+                    </div>
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <button class="button button-secondary" onclick="openCurrentMissionsPage()" style="background-color: var(--light-beige); color: var(--text-dark);">
+                            See All Current Missions →
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Archived Missions Preview -->
+                <div>
+                    <h2 style="font-size: 1.3rem; margin-bottom: 1rem; color: var(--text-dark);">Archived Missions</h2>
+                    <div class="missions-grid" id="archived-preview" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));">
+                        <!-- Cards will be populated -->
+                    </div>
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <button class="button button-secondary" onclick="openArchivedMissionsPage()" style="background-color: var(--light-beige); color: var(--text-dark);">
+                            See All Archived Missions →
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CURRENT MISSIONS PAGE -->
+            <div id="current-missions-page" class="page" style="display: none;">
+                <button class="back-btn" onclick="showMissionsOverview()">← Back to Dashboard</button>
+                <div class="page-header">
+                    <div class="page-title">All Current Missions</div>
+                    <div class="page-subtitle">All active volunteer opportunities</div>
+                </div>
+                <div class="missions-grid" id="current-missions-full"></div>
+                <div class="pagination" id="current-pagination"></div>
+            </div>
+
+            <!-- ARCHIVED MISSIONS PAGE -->
+            <div id="archived-missions-page" class="page" style="display: none;">
+                <button class="back-btn" onclick="showMissionsOverview()">← Back to Dashboard</button>
+                <div class="page-header">
+                    <div class="page-title">All Archived Missions</div>
+                    <div class="page-subtitle">Completed volunteer activities</div>
+                </div>
+                <div class="missions-grid" id="archived-missions-full"></div>
+                <div class="pagination" id="archived-pagination"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MISSION DETAIL MODAL -->
+    <div class="modal-overlay" id="detailModal" onclick="closeDetailModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <button class="modal-close" onclick="closeDetailModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <h2 id="modal-title" style="font-size: 1.5rem; margin-bottom: 1rem; color: var(--text-dark);"></h2>
+                
+                <div class="detail-section">
+                    <div class="detail-label">Description</div>
+                    <div class="detail-value" id="modal-description"></div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-label">Location</div>
+                    <div class="detail-value" id="modal-location">📍 <span id="modal-location-text"></span></div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-label">Date Range</div>
+                    <div class="detail-value" id="modal-dates">📅 <span id="modal-dates-text"></span></div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-label">Volunteers Needed</div>
+                    <div class="detail-value"><strong id="modal-volunteers"></strong> slots available</div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-label">Competencies Required</div>
+                    <div class="competencies-list" id="modal-competencies"></div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-label">Status</div>
+                    <div class="detail-value" id="modal-status"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="button button-primary" onclick="editMission()">Edit Mission</button>
+                <button class="button button-secondary" onclick="closeDetailModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // SAMPLE DATA
+        const currentMissions = [
+            {
+                id: 1,
+                title: 'Beach Cleanup Drive',
+                description: 'Join us in cleaning up the local beach and protecting marine life. We will provide gloves and bags.',
+                location: 'Sunset Beach Park',
+                startDate: '2025-12-05',
+                endDate: '2025-12-05',
+                volunteersNeeded: 15,
+                competencies: ['Physical Fitness', 'Environmental Awareness'],
+                image: 'linear-gradient(135deg, #347362, #34B26A)',
+                status: 'Active'
+            },
+            {
+                id: 2,
+                title: 'Community Garden Development',
+                description: 'Help us build and maintain a community garden to grow fresh vegetables for local families in need.',
+                location: 'Central Community Center',
+                startDate: '2025-12-10',
+                endDate: '2025-12-31',
+                volunteersNeeded: 8,
+                competencies: ['Gardening', 'Teamwork'],
+                image: 'linear-gradient(135deg, #34B26A, #0F393B)',
+                status: 'Active'
+            },
+            {
+                id: 3,
+                title: 'Youth Sports Training',
+                description: 'Mentor young athletes and help develop their sports skills through coaching and guidance.',
+                location: 'Central Sports Complex',
+                startDate: '2025-12-15',
+                endDate: '2026-01-15',
+                volunteersNeeded: 12,
+                competencies: ['Sports', 'Coaching', 'Leadership'],
+                image: 'linear-gradient(135deg, #EF8451, #347362)',
+                status: 'Active'
+            },
+            {
+                id: 4,
+                title: 'Senior Care Companion Program',
+                description: 'Provide companionship and assistance to elderly residents through visits and activities.',
+                location: 'Sunrise Senior Home',
+                startDate: '2025-12-20',
+                endDate: '2026-02-20',
+                volunteersNeeded: 6,
+                competencies: ['Patient Care', 'Empathy', 'Communication'],
+                image: 'linear-gradient(135deg, #34B26A, #EF8451)',
+                status: 'Active'
+            },
+            {
+                id: 5,
+                title: 'After-School Tutoring',
+                description: 'Tutor students in math, science, and reading after school hours to improve academic performance.',
+                location: 'Lincoln High School',
+                startDate: '2025-12-22',
+                endDate: '2026-03-22',
+                volunteersNeeded: 10,
+                competencies: ['Education', 'Teaching', 'Patience'],
+                image: 'linear-gradient(135deg, #0F393B, #34B26A)',
+                status: 'Active'
+            },
+            {
+                id: 6,
+                title: 'Food Bank Distribution',
+                description: 'Sort, pack, and distribute food items to families in need throughout the community.',
+                location: 'Downtown Food Bank',
+                startDate: '2025-12-25',
+                endDate: '2025-12-25',
+                volunteersNeeded: 20,
+                competencies: ['Organization', 'Teamwork'],
+                image: 'linear-gradient(135deg, #EF8451, #34B26A)',
+                status: 'Active'
+            }
+        ];
+
+        const archivedMissions = [
+            {
+                id: 101,
+                title: 'Park Trail Restoration',
+                description: 'Restored and maintained local hiking trails through clearing and landscaping work.',
+                location: 'Mountain View Park',
+                startDate: '2025-10-01',
+                endDate: '2025-11-30',
+                volunteersNeeded: 18,
+                competencies: ['Outdoors', 'Physical Fitness'],
+                image: 'linear-gradient(135deg, #347362, #0F393B)',
+                status: 'Archived'
+            },
+            {
+                id: 102,
+                title: 'Holiday Gift Drive 2024',
+                description: 'Collected and distributed gifts to underprivileged children during the holiday season.',
+                location: 'Community Center Downtown',
+                startDate: '2025-11-01',
+                endDate: '2025-11-30',
+                volunteersNeeded: 25,
+                competencies: ['Community Service', 'Teamwork'],
+                image: 'linear-gradient(135deg, #EF8451, #0F393B)',
+                status: 'Archived'
+            },
+            {
+                id: 103,
+                title: 'Library Book Donation Campaign',
+                description: 'Organized book donation drive and cataloged books for underfunded schools.',
+                location: 'Central Library',
+                startDate: '2025-10-15',
+                endDate: '2025-11-15',
+                volunteersNeeded: 12,
+                competencies: ['Organization', 'Education'],
+                image: 'linear-gradient(135deg, #34B26A, #347362)',
+                status: 'Archived'
+            }
+        ];
+
+        // INITIALIZE
+        document.addEventListener('DOMContentLoaded', function() {
+            renderMissionsPreview();
+        });
+
+        function renderMissionsPreview() {
+            const currentPreview = document.getElementById('current-preview');
+            const archivedPreview = document.getElementById('archived-preview');
+            
+            currentPreview.innerHTML = currentMissions.slice(0, 3).map(m => createMissionCard(m)).join('');
+            archivedPreview.innerHTML = archivedMissions.slice(0, 3).map(m => createMissionCard(m)).join('');
+        }
+
+        function createMissionCard(mission) {
+            return `
+                <div class="mission-card" onclick="openDetailModal(${mission.id}, ${mission.status === 'Archived' ? 'archived' : 'current'})">
+                    <div class="mission-image" style="background: ${mission.image};"></div>
+                    <div class="mission-card-content">
+                        <div class="mission-title">${mission.title}</div>
+                        <div class="mission-description">${mission.description}</div>
+                        <div class="mission-meta">
+                            <div class="mission-meta-item">📅 ${new Date(mission.startDate).toLocaleDateString()}</div>
+                            <div class="mission-meta-item">📍 ${mission.location}</div>
+                        </div>
+                        <div class="mission-volunteers">${mission.volunteersNeeded} Volunteers Needed</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function openCurrentMissionsPage() {
+            document.getElementById('missions-overview').style.display = 'none';
+            document.getElementById('current-missions-page').style.display = 'block';
+            renderCurrentMissionsPage();
+        }
+
+        function openArchivedMissionsPage() {
+            document.getElementById('missions-overview').style.display = 'none';
+            document.getElementById('archived-missions-page').style.display = 'block';
+            renderArchivedMissionsPage();
+        }
+
+        function showMissionsOverview() {
+            document.getElementById('missions-overview').style.display = 'block';
+            document.getElementById('current-missions-page').style.display = 'none';
+            document.getElementById('archived-missions-page').style.display = 'none';
+        }
+
+        function renderCurrentMissionsPage() {
+            const grid = document.getElementById('current-missions-full');
+            grid.innerHTML = currentMissions.map(m => createMissionCard(m)).join('');
+        }
+
+        function renderArchivedMissionsPage() {
+            const grid = document.getElementById('archived-missions-full');
+            grid.innerHTML = archivedMissions.map(m => createMissionCard(m)).join('');
+        }
+
+        function openDetailModal(missionId, type) {
+            const missions = type === 'archived' ? archivedMissions : currentMissions;
+            const mission = missions.find(m => m.id === missionId);
+            
+            if (!mission) return;
+
+            document.getElementById('modal-title').textContent = mission.title;
+            document.getElementById('modal-description').textContent = mission.description;
+            document.getElementById('modal-location-text').textContent = mission.location;
+            document.getElementById('modal-dates-text').textContent = `${new Date(mission.startDate).toLocaleDateString()} - ${new Date(mission.endDate).toLocaleDateString()}`;
+            document.getElementById('modal-volunteers').textContent = mission.volunteersNeeded;
+            document.getElementById('modal-status').innerHTML = `<strong style="color: ${mission.status === 'Active' ? 'var(--bright-green)' : 'var(--coral)'}">${mission.status}</strong>`;
+            
+            const competenciesHtml = mission.competencies.map(c => `<div class="competency-tag">${c}</div>`).join('');
+            document.getElementById('modal-competencies').innerHTML = competenciesHtml;
+
+            document.getElementById('detailModal').classList.add('active');
+        }
+
+        function closeDetailModal(event) {
+            if (event && event.target.id !== 'detailModal') return;
+            document.getElementById('detailModal').classList.remove('active');
+        }
+
+        function editMission() {
+            alert('Edit functionality would open an edit form here.');
+            closeDetailModal();
+        }
+
+        function showDashboard() {
+            alert('Profile page would load here');
+        }
+
+        function showVolunteers() {
+            alert('Volunteers page would load here');
+        }
+
+        function showNotifications() {
+            alert('Notifications page would load here');
+        }
+
+        function showMissions() {
+            showMissionsOverview();
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                alert('You have been logged out');
+            }
+        }
+    </script>
+</body>
+</html>

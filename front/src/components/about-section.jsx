@@ -1,5 +1,3 @@
-
-
 export default function AboutSection() {
   return (
     <section id="about" className="about-section">
@@ -19,5 +17,5 @@ export default function AboutSection() {
         </div>
       </div>
     </section>
-  )
+  );
 }

@@ -1,9 +1,8 @@
-"use client"
 import { useState, useRef } from "react"
 import { 
   FiUpload, FiUser, FiMapPin, FiBriefcase, FiCalendar, FiFileText, FiCheckSquare, FiSave 
 } from "react-icons/fi"
-import styles from "../styles/dashOrg.module.css"
+import styles from "/src/styles/dashOrg.module.css"
 
 export default function Profile() {
   const [formData, setFormData] = useState({

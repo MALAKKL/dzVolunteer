@@ -1,4 +1,5 @@
 /* Global Styles for Volunteer Signup Page */
+@import "tailwindcss";
 
 * {
   margin: 0;

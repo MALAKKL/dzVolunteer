@@ -1,4 +1,5 @@
 "use client"
+import { Link } from "react-router-dom";
 import { FaFacebookF, FaLinkedinIn, FaInstagram, FaWhatsapp } from "react-icons/fa";
 import { SiX } from "react-icons/si";
 
@@ -6,25 +7,42 @@ export default function NavbarVisitor({ sections, activeSection, handleNavClick 
   return (
     <nav className="navbar">
       {/* logo */}
-      <img src="/logo1.svg" alt="Logo" style={{ width: "auto", height: "80px" }} />
+      <Link to="/">
+        <img src="/logo1.svg" alt="Logo" style={{ width: "auto", height: "80px", cursor: "pointer" }} />
+      </Link>
 
-      {/* ;enu */}
+      {/* menu */}
       <ul className="nav-menu">
         {sections.map((section) => (
           <li key={section}>
-            <button
-              className={`nav-link ${activeSection === section ? "active" : ""}`}
-              onClick={() => handleNavClick(section)}
-            >
-              {section.charAt(0).toUpperCase() + section.slice(1)}
-            </button>
+            {section === "missions" ? (
+              <Link
+                to="/missions"
+                className={`nav-link ${activeSection === section ? "active" : ""}`}
+              >
+                {section.charAt(0).toUpperCase() + section.slice(1)}
+              </Link>
+            ) : (
+              <button
+                className={`nav-link ${activeSection === section ? "active" : ""}`}
+                onClick={() => handleNavClick(section)}
+              >
+                {section.charAt(0).toUpperCase() + section.slice(1)}
+              </button>
+            )}
           </li>
         ))}
 
         {/* login / signup */}
-        <li>
-          <button className="login-btn" style={{ padding: "10px",marginRight:"5px" }}>Login</button>
-          <button className="signup-btn" style={{ padding: "15px" }}>Sign up</button>
+        <li className="nav-auth-buttons">
+          <Link to="/login" className="login-btn-link">
+            <span className="btn-text">Login</span>
+            <span className="btn-icon">→</span>
+          </Link>
+          <Link to="/signup" className="signup-btn-link">
+            <span className="btn-text">Sign up</span>
+            <span className="btn-shine"></span>
+          </Link>
         </li>
       </ul>
     </nav>
