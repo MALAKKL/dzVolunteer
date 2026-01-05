@@ -7,6 +7,13 @@ exports.createMission = async (req, res) => {
     const organizationId = req.user.organization.id; // from auth middleware
     const { title, description, location, startDate, endDate, volunteersNeeded, skills, sdgId } = req.body;
 
+    // Validate SDG if provided
+    let sdg = null;
+    if (sdgId) {
+      sdg = await prisma.sDG.findUnique({ where: { id: Number(sdgId) } });
+      if (!sdg) return res.status(400).json({ message: "Invalid SDG selected" });
+    }
+
     const mission = await prisma.mission.create({
       data: {
         organizationId,
@@ -16,7 +23,7 @@ exports.createMission = async (req, res) => {
         startDate: new Date(startDate),
         endDate: new Date(endDate),
         volunteersNeeded,
-        sdgId,
+        sdgId: sdg ? sdg.id : null,
         skills: {
           create: skills.map(s => ({
             skillId: s.skillId,
@@ -25,11 +32,15 @@ exports.createMission = async (req, res) => {
           }))
         }
       },
-      include: { skills: true }
+      include: {
+        skills: { include: { skill: true } },
+        sdg: true
+      }
     });
 
     res.status(201).json({ message: "Mission created", mission });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -39,15 +50,15 @@ exports.getAllMissions = async (req, res) => {
   try {
     const missions = await prisma.mission.findMany({
       include: {
-        skillsRequired: true,
-        organization: {
-          select: { name: true, email: true },
-        },
-      },
+        skills: { include: { skill: true } },
+        sdg: true,
+        organization: { select: { name: true, email: true } }
+      }
     });
 
     res.json(missions);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: "Error loading missions" });
   }
 };
@@ -55,45 +66,55 @@ exports.getAllMissions = async (req, res) => {
 // Get a mission by ID
 exports.getMission = async (req, res) => {
   try {
+    const missionId = req.params.id; // use string ID
     const mission = await prisma.mission.findUnique({
-      where: { id: Number(req.params.id) },
+      where: { id: missionId },
       include: {
-        skillsRequired: true,
+        skills: { include: { skill: true } },
+        sdg: true,
         organization: true,
-        applications: true,
-      },
+        applications: true
+      }
     });
 
     if (!mission) return res.status(404).json({ message: "Mission not found" });
 
     res.json(mission);
   } catch (error) {
-    res.status(500).json({ message: "Error" });
+    console.error(error);
+    res.status(500).json({ message: "Error fetching mission" });
   }
 };
 
 // Update mission (organization only)
 exports.updateMission = async (req, res) => {
   try {
-    const missionId = Number(req.params.id);
-    const orgId = req.user.id;
+    const missionId = req.params.id; // string ID
+    const orgId = req.user.organization.id;
 
-    // Ensure mission belongs to this org
-    const mission = await prisma.mission.findUnique({
-      where: { id: missionId },
-    });
+    const mission = await prisma.mission.findUnique({ where: { id: missionId } });
 
     if (!mission || mission.organizationId !== orgId) {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
+    // Validate SDG if trying to update
+    if (req.body.sdgId) {
+      const sdg = await prisma.sDG.findUnique({ where: { id: Number(req.body.sdgId) } });
+      if (!sdg) return res.status(400).json({ message: "Invalid SDG" });
+
+      req.body.sdgId = sdg.id;
+    }
+
     const updated = await prisma.mission.update({
       where: { id: missionId },
       data: req.body,
+      include: { skills: { include: { skill: true } }, sdg: true }
     });
 
     res.json({ message: "Mission updated", updated });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: "Error updating mission" });
   }
 };
@@ -101,23 +122,20 @@ exports.updateMission = async (req, res) => {
 // Delete mission
 exports.deleteMission = async (req, res) => {
   try {
-    const missionId = Number(req.params.id);
-    const orgId = req.user.id;
+    const missionId = req.params.id;
+    const orgId = req.user.organization.id;
 
-    const mission = await prisma.mission.findUnique({
-      where: { id: missionId },
-    });
+    const mission = await prisma.mission.findUnique({ where: { id: missionId } });
 
     if (!mission || mission.organizationId !== orgId) {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
-    await prisma.mission.delete({
-      where: { id: missionId },
-    });
+    await prisma.mission.delete({ where: { id: missionId } });
 
     res.json({ message: "Mission deleted" });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: "Error deleting mission" });
   }
 };
@@ -125,45 +143,32 @@ exports.deleteMission = async (req, res) => {
 // Get all applicants for a mission (organization only)
 exports.getMissionApplicants = async (req, res) => {
   try {
-    const missionId = Number(req.params.id); // mission ID from URL
-    const orgId = req.user.id; // organization ID from auth middleware
+    const missionId = req.params.id;
+    const orgId = req.user.organization.id;
 
-    // Find the mission with its applications
     const mission = await prisma.mission.findUnique({
       where: { id: missionId },
       include: {
-        applications: {
-          include: {
-            volunteer: true, // include volunteer info for each application
-          }
-        }
+        applications: { include: { volunteer: true } }
       }
     });
 
-    if (!mission) {
-      return res.status(404).json({ message: "Mission not found" });
-    }
+    if (!mission) return res.status(404).json({ message: "Mission not found" });
+    if (mission.organizationId !== orgId) return res.status(403).json({ message: "Unauthorized" });
 
-    // Only allow the organization that owns the mission
-    if (mission.organizationId !== orgId) {
-      return res.status(403).json({ message: "Unauthorized" });
-    }
-
-    // Return the list of applications
     res.json(mission.applications);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Error fetching applicants", error });
+    res.status(500).json({ message: "Error fetching applicants" });
   }
 };
-
 
 // Approve or reject an applicant
 exports.updateApplicationStatus = async (req, res) => {
   try {
-    const { status } = req.body; // "approved" or "rejected"
-    const applicationId = Number(req.params.applicationId);
-    const orgId = req.user.id;
+    const { status } = req.body; // "APPROVED" or "REJECTED"
+    const applicationId = req.params.applicationId;
+    const orgId = req.user.organization.id;
 
     const application = await prisma.application.findUnique({
       where: { id: applicationId },
@@ -181,6 +186,7 @@ exports.updateApplicationStatus = async (req, res) => {
 
     res.json({ message: `Application ${status}`, updated });
   } catch (error) {
-    res.status(500).json({ message: "Error updating application status", error });
+    console.error(error);
+    res.status(500).json({ message: "Error updating application status" });
   }
 };

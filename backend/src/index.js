@@ -29,12 +29,14 @@ const missionRoutesOrg = require("./routes/missionRoutesOrg");
 const missionRoutesPublic = require("./routes/missionRoutesPublic");
 const organizationRoutes = require("./routes/organizationRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const sdgRoutes = require("./routes/sdgRoutes");
+
 
 // Public mission routes
-app.use("/api/missions", missionRoutesPublic);
+app.use("/api/missions", missionRoutesPublic);//for public
 
 // Organization-only mission routes
-app.use("/api/organization/missions", missionRoutesOrg);
+app.use("/api/organization/missions", missionRoutesOrg);//only orrg
 
 // Organization routes (view/update)
 app.use("/api/organizations", organizationRoutes);
@@ -44,6 +46,10 @@ app.use("/api/auth", authRoutes);
 
 // Admin routes
 app.use("/api/admin", adminRoutes);
+
+// Admin-only import
+// Public missions by SDG
+app.use("/api/sdgs", sdgRoutes);
 
 // Test route
 app.get("/", (req, res) => {
