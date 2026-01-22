@@ -30,6 +30,9 @@ const missionRoutesPublic = require("./routes/missionRoutesPublic");
 const organizationRoutes = require("./routes/organizationRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const sdgRoutes = require("./routes/sdgRoutes");
+const missionRoutes = require('./routes/missionRoutes');
+const applicationRoutes = require("./routes/applicationRoutes");
+
 
 
 // Public mission routes
@@ -50,6 +53,12 @@ app.use("/api/admin", adminRoutes);
 // Admin-only import
 // Public missions by SDG
 app.use("/api/sdgs", sdgRoutes);
+
+//voolunt mission
+app.use('/api/missions', missionRoutes);
+
+// application routes
+app.use("/api/applications", applicationRoutes);
 
 
 app.use("/uploads", express.static("uploads"));
