@@ -1,3 +1,8 @@
+// @tailwind base;
+// @tailwind components;
+// @tailwind utilities;
+
+
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
@@ -6,6 +11,8 @@ import './index.css'
 import './styles/orgdash.css'
 import App from './App.jsx'
 import './index.css'
+
+
 
 
 /* export const metadata = {
