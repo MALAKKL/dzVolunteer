@@ -1,4 +1,5 @@
-import styles from "/src/styles/dashOrg.module.css";
+"use client";
+import styles from "../styles/dashOrg.module.css";
 
 import {
   FiUser,

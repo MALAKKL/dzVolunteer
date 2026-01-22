@@ -1,14 +1,14 @@
 import { useState } from "react"
 
-import Sidebar from "../components/org/dash_sidebar.jsx"
-import Profile from "../components/org/dash_profile.jsx"
-import Missions from "../components/org/dash_missions.jsx"
-import Volunteers from "../components/org/dash_volunteers.jsx"
-import Notifications from "../components/org/dash_notifications.jsx"
+import Sidebar from "../components/dash_sidebar"
+import Profile from "../components/dash_profile"
+import Missions from "../components/dash_missions"
+import Volunteers from "../components/dash_volunteers"
+import Notifications from "../components/dash_notifications"
 
 import styles from "../styles/dashOrg.module.css" 
 
-export default function Dashboard() {
+export default function OrgDashboard() {
   const [currentPage, setCurrentPage] = useState("profile")
 
   const renderPage = () => {

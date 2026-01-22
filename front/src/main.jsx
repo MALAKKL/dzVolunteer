@@ -1,18 +1,14 @@
-// @tailwind base;
-// @tailwind components;
-// @tailwind utilities;
-
-
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
+// hadou ta3 routing
 
+
+
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
 import './index.css'
-import './styles/orgdash.css'
 import App from './App.jsx'
-import './index.css'
-
-
 
 
 /* export const metadata = {
@@ -22,15 +18,19 @@ import './index.css'
 } */
 
 
+createRoot(document.getElementById('root')).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+) 
 
 
-const root = ReactDOM.createRoot(document.getElementById('root'))
-root.render(
+
+ReactDOM.createRoot(document.getElementById('root')).render(
   <BrowserRouter>
     <App />
   </BrowserRouter>
 )
-
 // to enable routing
 
 
@@ -43,4 +43,4 @@ export default function RootLayout({ children }) {
       <body>{children}</body>
     </html>
   )
-}
+} 
