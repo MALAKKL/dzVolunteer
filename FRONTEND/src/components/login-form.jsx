@@ -1,11 +1,13 @@
 "use client"
 
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { FaEnvelope, FaLock } from "react-icons/fa"
 import styles from "../styles/signUp.module.css"
 import { authAPI } from "../utils/api"
 
 export default function LoginForm({ accountType, setAccountType, userInfo, setUserInfo }) {
+  const navigate = useNavigate()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [errors, setErrors] = useState({})
@@ -36,6 +38,8 @@ export default function LoginForm({ accountType, setAccountType, userInfo, setUs
       const response = await authAPI.login({ email, password, role })
 
       if (response.token) {
+        localStorage.setItem("token", response.token)
+        localStorage.setItem("user", JSON.stringify(response.user))
         // Get user profile
         const profileResponse = await authAPI.getProfile()
         setUserInfo({
@@ -44,6 +48,8 @@ export default function LoginForm({ accountType, setAccountType, userInfo, setUs
           ...profileResponse,
         })
         alert(`Welcome back! You've been logged in.`)
+        // Redirect to appropriate dashboard
+        navigate(accountType === "volunteer" ? "/dashVolunteer" : "/dashOrgan")
       } else {
         setErrors({ form: response.message || "Login failed" })
       }
