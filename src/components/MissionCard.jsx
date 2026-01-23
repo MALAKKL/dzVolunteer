@@ -2,7 +2,7 @@
 import "./MissionCard.css";
 import { WhatsappIcon, InstagramIcon, FacebookIcon, LinkedinIcon } from "./SocialIcons";
 
-function MissionCard({ mission }) {
+function MissionCard({ mission, showApplyButton = false, onApply = () => {} }) {
   if (!mission) return <p>Loading mission...</p>; // safety check
 
   return (
@@ -48,6 +48,13 @@ function MissionCard({ mission }) {
           </div>
         </div>
 
+        {/* 🔹 APPLY BUTTON */}
+        {showApplyButton && (
+          <button className="apply-button" onClick={onApply}>
+            Apply Now
+          </button>
+        )}
+
         <div className="social-links">
           <a href="#" className="social-icon" aria-label="WhatsApp">
             <WhatsappIcon />
@@ -61,7 +68,7 @@ function MissionCard({ mission }) {
           <a href="#" className="social-icon" aria-label="LinkedIn">
             <LinkedinIcon />
           </a>
-        </div>
+        </div> 
       </div>
     </div>
   );
