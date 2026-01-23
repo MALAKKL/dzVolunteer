@@ -61,6 +61,33 @@
 
 
 
+.applyButton {
+  margin-top: auto; /* pushes button to bottom */
+  padding: 14px;
+  background-color: #347362;
+  color: #f0f0f0;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.applyButton:hover {
+  background-color: #2c5f52;
+}
+
+
+
+
+
+
+
+
+
+
+
 
 
 .infoLabel {
