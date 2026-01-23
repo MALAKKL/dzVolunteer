@@ -6,7 +6,7 @@ import {
   FiClipboard,
   FiUsers,
   FiBell,
-  FiLogOut,
+  
 } from "react-icons/fi";
 
 export default function Sidebar({ currentPage, onNavigate }) {
@@ -51,10 +51,10 @@ export default function Sidebar({ currentPage, onNavigate }) {
       </div>
 
       {/* Logout */}
-      <button className={styles["logout-btn"]}>
+      {/* <button className={styles["logout-btn"]}>
         <FiLogOut className={styles["logout-icon"]} size={18} />
         <span>Logout</span>
-      </button>
+      </button> */}
     </aside>
   );
 }
