@@ -9,9 +9,12 @@ const getAuthToken = () => {
 const authFetch = async (url, options = {}) => {
   const token = getAuthToken();
   const headers = {
-    'Content-Type': 'application/json',
     ...options.headers,
   };
+
+  if (!(options.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   if (token) {
     headers.Authorization = `Bearer ${token}`;
@@ -171,6 +174,14 @@ export const organizationsAPI = {
     const response = await authFetch(`/organizations/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
+    });
+    return response.json();
+  },
+
+  uploadOrganizationProfilePhoto: async (formData) => {
+    const response = await authFetch('/organizations/profile/photo', {
+      method: 'PUT',
+      body: formData,
     });
     return response.json();
   },
