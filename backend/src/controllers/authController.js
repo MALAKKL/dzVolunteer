@@ -47,7 +47,11 @@ exports.registerVolunteer = async (req, res) => {
       include: { user: true },
     });
 
-    res.status(201).json({ message: "Volunteer registered", volunteer });
+    // Generate JWT token
+    const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET || "your-secret-key", { expiresIn: "7d" });
+    const { password: _, ...safeUser } = user;
+
+    res.status(201).json({ message: "Volunteer registered", token, user: safeUser, volunteer });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -90,7 +94,11 @@ exports.registerOrganization = async (req, res) => {
       include: { user: true },
     });
 
-    res.status(201).json({ message: "Organization registered", organization: org });
+    // Generate JWT token
+    const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET || "your-secret-key", { expiresIn: "7d" });
+    const { password: _, ...safeUser } = user;
+
+    res.status(201).json({ message: "Organization registered", token, user: safeUser, organization: org });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -114,7 +122,7 @@ exports.login = async (req, res) => {
         return res.status(401).json({ message: "Invalid admin credentials" });
       }
 
-      const token = jwt.sign({ id: "admin", role: "ADMIN" }, JWT_SECRET, { expiresIn: "7d" });
+      const token = jwt.sign({ id: "admin", role: "ADMIN" }, JWT_SECRET || "your-secret-key", { expiresIn: "7d" });
 
       return res.json({ message: "Admin logged in", token, user: { email, role: "ADMIN" } });
     }
@@ -145,7 +153,7 @@ exports.login = async (req, res) => {
     if (!match) return res.status(400).json({ message: "Invalid credentials" });
 
     // Generate JWT token
-    const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: "7d" });
+    const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET || "your-secret-key", { expiresIn: "7d" });
 
     // Send user profile without password
     const { password: _, ...safeUser } = user;
@@ -165,7 +173,7 @@ exports.googleAuth = async (req, res) => {
     const { credential, role } = req.body;
 
     if (!credential || !role) return res.status(400).json({ message: "Credential and role required" });
-    if (!["volunteer", "organization"].includes(role)) return res.status(400).json({ message: "Invalid role" });
+    if (!["VOLUNTEER", "ORGANIZATION"].includes(role.toUpperCase())) return res.status(400).json({ message: "Invalid role" });
 
     const ticket = await googleClient.verifyIdToken({
       idToken: credential,
@@ -174,34 +182,59 @@ exports.googleAuth = async (req, res) => {
 
     const payload = ticket.getPayload();
     const email = payload.email;
-    const firstName = payload.given_name;
-    const lastName = payload.family_name;
+    const firstName = payload.given_name || "";
+    const lastName = payload.family_name || "";
     const avatarUrl = payload.picture;
     const googleId = payload.sub;
+    const userRole = role.toUpperCase();
 
-    let user =
-      role === "volunteer"
-        ? await prisma.volunteer.findFirst({ where: { email } })
-        : await prisma.organization.findFirst({ where: { email } });
+    // Find or create User first
+    let user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
-      // Create new user
-      if (role === "volunteer") {
-        user = await prisma.volunteer.create({
-          data: { firstName, lastName, email, googleId, avatarUrl },
+      // Create new User
+      user = await prisma.user.create({
+        data: {
+          email,
+          googleId,
+          firstName,
+          lastName,
+          avatarUrl,
+          role: userRole,
+        },
+      });
+
+      // Create related Volunteer or Organization profile
+      if (userRole === "VOLUNTEER") {
+        await prisma.volunteer.create({
+          data: {
+            userId: user.id,
+            firstName,
+            lastName,
+          },
         });
-      } else {
-        user = await prisma.organization.create({
-          data: { name: firstName + " " + lastName, email, googleId, avatarUrl },
+      } else if (userRole === "ORGANIZATION") {
+        await prisma.organization.create({
+          data: {
+            userId: user.id,
+            name: firstName + " " + lastName,
+          },
         });
       }
+    } else if (!user.role || user.role !== userRole) {
+      // Update user role if needed
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { role: userRole },
+      });
     }
 
-    const token = jwt.sign({ id: user.id, role }, JWT_SECRET, { expiresIn: "7d" });
+    const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET || "your-secret-key", { expiresIn: "7d" });
     const { password: _, ...safeUser } = user;
 
     res.json({ message: "Google login successful", token, user: safeUser });
   } catch (err) {
+    console.error("Google Auth Error:", err);
     res.status(500).json({ error: err.message });
   }
 };
