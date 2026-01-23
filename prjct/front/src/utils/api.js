@@ -56,6 +56,19 @@ export const authAPI = {
     return result;
   },
 
+  googleAuth: async (data) => {
+    const response = await fetch(`${API_BASE_URL}/auth/google`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    const result = await response.json();
+    if (result.token) {
+      localStorage.setItem('token', result.token);
+    }
+    return result;
+  },
+
   getProfile: async () => {
     const response = await authFetch('/auth/profile');
     return response.json();
@@ -187,6 +200,16 @@ export const volunteersAPI = {
     const response = await authFetch('/volunteers/me', {
       method: 'DELETE',
     });
+    return response.json();
+  },
+
+  getMyApplications: async () => {
+    const response = await authFetch('/applications/my-applications');
+    return response.json();
+  },
+
+  getMyParticipations: async () => {
+    const response = await authFetch('/participations/my-participations');
     return response.json();
   },
 };

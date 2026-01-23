@@ -1,88 +1,11 @@
 'use client';
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import styles from '../components/volDashboard.module.css'; // Import CSS Module
+import { volunteersAPI } from '../utils/api';
 
-const { useState } = React;
-
-// Mock Data
-const mockVolunteer = {
-  id: 1,
-  firstName: 'Ahmed',
-  lastName: 'Bensaid',
-  description: 'Passionate about environmental conservation and community development. Love working with diverse teams.',
-  interests: ['Environnement', 'Éducation', 'Aide Sociale'],
-  location: 'Alger, Algérie',
-  availability: 'Weekends & Evenings',
-  photo: '👤',
-  skills: [
-    { id: 1, name: 'Project Management', status: 'verified' },
-    { id: 2, name: 'Teaching', status: 'verified' },
-    { id: 3, name: 'Environmental Science', status: 'pending' },
-    { id: 4, name: 'Community Outreach', status: 'verified' },
-  ]
-};
-
-const mockApplications = [
-  {
-    id: 1,
-    missionTitle: 'Tree Planting Initiative',
-    organizationName: 'Green Earth Algeria',
-    date: '2024-02-15',
-    location: 'Alger',
-    status: 'accepted',
-    requiredSkills: ['Project Management'],
-    remainingSpots: 3
-  },
-  {
-    id: 2,
-    missionTitle: 'Community Education Program',
-    organizationName: 'Hope Education',
-    date: '2024-02-22',
-    location: 'Alger',
-    status: 'pending',
-    requiredSkills: ['Teaching'],
-    remainingSpots: 5
-  },
-  {
-    id: 3,
-    missionTitle: 'Clean City Campaign',
-    organizationName: 'Clean Streets Initiative',
-    date: '2024-02-10',
-    location: 'Alger',
-    status: 'rejected',
-    requiredSkills: ['Community Outreach'],
-    remainingSpots: 0
-  }
-];
-
-const mockParticipations = [
-  {
-    id: 1,
-    missionTitle: 'Community Clean-up Drive',
-    organizationName: 'Environmental Care',
-    date: '2024-01-20',
-    hoursValidated: 4,
-    status: 'completed'
-  },
-  {
-    id: 2,
-    missionTitle: 'Youth Mentorship Program',
-    organizationName: 'Future Leaders',
-    date: '2024-01-28',
-    hoursValidated: 6,
-    status: 'completed'
-  },
-  {
-    id: 3,
-    missionTitle: 'Health Awareness Campaign',
-    organizationName: 'Health for All',
-    date: '2024-02-05',
-    hoursValidated: 3,
-    status: 'waitingValidation'
-  }
-];
+const { useState: useStateAlias } = React;
 
 // Utility Functions
 function calculateTotalHours(participations) {
@@ -316,21 +239,99 @@ function ParticipationsCard({ participations }) {
 
 // Main Dashboard Component
 export default function Dashboard() {
-  const totalHours = calculateTotalHours(mockParticipations);
+  const [volunteer, setVolunteer] = useState(null);
+  const [applications, setApplications] = useState([]);
+  const [participations, setParticipations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [profileRes, appsRes, partsRes] = await Promise.all([
+          volunteersAPI.getMyProfile(),
+          volunteersAPI.getMyApplications(),
+          volunteersAPI.getMyParticipations()
+        ]);
+
+        if (profileRes.error) throw new Error(profileRes.error);
+        if (appsRes.error) throw new Error(appsRes.error);
+        if (partsRes.error) throw new Error(partsRes.error);
+
+        setVolunteer(transformProfile(profileRes));
+        setApplications(transformApplications(appsRes));
+        setParticipations(transformParticipations(partsRes));
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const transformProfile = (data) => {
+    return {
+      id: data.id,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      description: data.bio || 'No description provided.',
+      interests: data.interests || [],
+      location: 'Alger, Algérie', // Assuming default, or get from user
+      availability: data.availabilities || 'Not specified',
+      photo: '👤',
+      skills: data.skills.map(s => ({
+        id: s.id,
+        name: s.skill.name,
+        status: s.status === 'VERIFIED' ? 'verified' : 'pending'
+      }))
+    };
+  };
+
+  const transformApplications = (data) => {
+    return data.map(app => ({
+      id: app.id,
+      missionTitle: app.mission.title,
+      organizationName: app.mission.organization.name,
+      date: app.appliedAt.split('T')[0], // Format date
+      location: app.mission.location,
+      status: app.status.toLowerCase(),
+      requiredSkills: [], // Could fetch mission skills if needed
+      remainingSpots: app.mission.volunteersNeeded - app.mission.volunteersAccepted
+    }));
+  };
+
+  const transformParticipations = (data) => {
+    return data.map(part => ({
+      id: part.id,
+      missionTitle: part.mission.title,
+      organizationName: part.mission.organization.name,
+      date: part.validatedAt.split('T')[0],
+      hoursValidated: part.hoursCompleted,
+      status: 'completed' // Assuming all participations are completed
+    }));
+  };
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+  if (!volunteer) return <div>No profile found</div>;
+
+  const totalHours = calculateTotalHours(participations);
 
   return (
     <div>
-      <DashboardHeader volunteer={mockVolunteer} />
+      <DashboardHeader volunteer={volunteer} />
       
       <div className={styles.dashboardContainer}>
         <HoursBadge totalHours={totalHours} />
 
         <div className={styles.dashboardGrid}>
-          <ProfileCard volunteer={mockVolunteer} />
-          <ApplicationsCard applications={mockApplications} />
+          <ProfileCard volunteer={volunteer} />
+          <ApplicationsCard applications={applications} />
         </div>
 
-        <ParticipationsCard participations={mockParticipations} />
+        <ParticipationsCard participations={participations} />
       </div>
     </div>
   );

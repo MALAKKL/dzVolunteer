@@ -120,6 +120,32 @@
 }
 
 /* Google Button */
+.google-button-wrapper {
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.google-button-wrapper :global(.gsi_outer_button) {
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 2px solid #d1d5db !important;
+  padding: 0.75rem 1rem !important;
+  border-radius: 9999px !important;
+  background-color: #ffffff !important;
+  color: #374151 !important;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: background-color 0.3s ease !important;
+  height: auto !important;
+}
+
+.google-button-wrapper :global(.gsi_outer_button:hover) {
+  background-color: #cdd2d7 !important;
+}
+
 .google-button {
   width: 100%;
   display: flex;

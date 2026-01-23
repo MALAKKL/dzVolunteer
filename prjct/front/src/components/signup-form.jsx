@@ -1,15 +1,16 @@
 "use client"
 
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { FaUser, FaBuilding, FaEnvelope, FaLock } from "react-icons/fa"
+import { GoogleLogin } from "@react-oauth/google"
 
 import "../App.css" // global styles (OK)
 import styles from "../styles/signUp.module.css" 
 import { authAPI } from "../utils/api" 
-import { useAuth } from "../contexts/AuthContext"
-import { useNavigate } from "react-router-dom"
 
 export default function SignupForm() {
+  const navigate = useNavigate()
   const [accountType, setAccountType] = useState("volunteer")
   const [formData, setFormData] = useState({
     firstName: "",
@@ -20,8 +21,6 @@ export default function SignupForm() {
   })
   const [errors, setErrors] = useState({})
   const [isLoading, setIsLoading] = useState(false)
-  const { login } = useAuth()
-  const navigate = useNavigate()
 
   const validateForm = () => {
     const newErrors = {}
@@ -95,27 +94,14 @@ export default function SignupForm() {
         })
       }
 
-      if (response.message) {
+      if (response.token) {
+        localStorage.setItem("token", response.token)
+        localStorage.setItem("user", JSON.stringify(response.user))
         alert(`Account created successfully as ${accountType}!`)
-        // Auto-login after signup
-        const loginResponse = await login({
-          email: formData.email,
-          password: formData.password,
-          role: accountType
-        });
-        if (loginResponse.token) {
-          navigate('/'); // Redirect to homepage
-        }
-        // Reset form
-        setFormData({
-          firstName: "",
-          familyName: "",
-          organizationName: "",
-          email: "",
-          password: "",
-        })
+        // Redirect to dashboard or home
+        navigate(accountType === "volunteer" ? "/dashVolunteer" : "/dashOrgan")
       } else {
-        alert("Registration failed: " + (response.error || "Unknown error"))
+        alert("Registration failed: " + (response.message || response.error || "Unknown error"))
       }
     } catch (error) {
       console.error("Signup error:", error)
@@ -125,9 +111,29 @@ export default function SignupForm() {
     }
   }
 
-  const handleGoogleSignup = () => {
-    console.log("[v0] Google signup clicked")
-    alert("Google signup functionality would be integrated here")
+  const handleGoogleSignup = async (credentialResponse) => {
+    try {
+      setIsLoading(true)
+      const response = await authAPI.googleAuth({
+        credential: credentialResponse.credential,
+        role: accountType.toUpperCase(),
+      })
+
+      if (response.token) {
+        localStorage.setItem("token", response.token)
+        localStorage.setItem("user", JSON.stringify(response.user))
+        alert("Google signup successful!")
+        // Redirect to dashboard or home
+        navigate(accountType === "volunteer" ? "/dashVolunteer" : "/dashOrgan")
+      } else {
+        alert("Google signup failed: " + (response.message || "Unknown error"))
+      }
+    } catch (error) {
+      console.error("Google signup error:", error)
+      alert("An error occurred during Google signup")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -140,17 +146,15 @@ export default function SignupForm() {
     </div>
 
     {/* google signup button */}
-    <button
-      onClick={handleGoogleSignup}
-      className={styles["google-button"]}
-    >
-      <img
-        src="/google.webp"
-        alt="Google"
-        className={styles["google-icon"]}
+    <div className={styles["google-button-wrapper"]}>
+      <GoogleLogin
+        onSuccess={handleGoogleSignup}
+        onError={() => alert("Google login failed")}
+        theme="outline"
+        size="large"
+        width="100%"
       />
-      Continue with Google
-    </button>
+    </div>
 
     {/* account type Tabs */}
     <div className={styles["tabs-container"]}>
