@@ -15,30 +15,44 @@ exports.registerVolunteer = async (req, res) => {
   try {
     const { firstName, lastName, email, password } = req.body;
 
-    if (!firstName || !lastName || !email || !password) {
+    if (!firstName || !lastName || !email || !password)
       return res.status(400).json({ message: "All fields are required" });
-    }
 
-    if (password.length < 8) {
+    if (password.length < 8)
       return res.status(400).json({ message: "Password must be at least 8 characters" });
-    }
 
-    const exists = await prisma.volunteer.findUnique({ where: { email } });
+    // Check if user already exists
+    const exists = await prisma.user.findUnique({ where: { email } });
     if (exists) return res.status(400).json({ message: "Email already exists" });
 
+    // Create the user
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    const volunteer = await prisma.volunteer.create({
-      data: { firstName, lastName, email, password: hashedPassword },
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        role: "VOLUNTEER",
+        firstName,
+        lastName,
+      },
     });
 
-    const { password: _, ...safeVolunteer } = volunteer;
+    // Create the volunteer profile
+    const volunteer = await prisma.volunteer.create({
+      data: {
+        userId: user.id,
+        firstName,
+        lastName,
+      },
+      include: { user: true },
+    });
 
-    res.status(201).json({ message: "Volunteer registered", volunteer: safeVolunteer });
+    res.status(201).json({ message: "Volunteer registered", volunteer });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 // ========================
 // REGISTER ORGANIZATION
@@ -47,30 +61,41 @@ exports.registerOrganization = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    if (!name || !email || !password) {
+    if (!name || !email || !password)
       return res.status(400).json({ message: "All fields are required" });
-    }
 
-    if (password.length < 8) {
+    if (password.length < 8)
       return res.status(400).json({ message: "Password must be at least 8 characters" });
-    }
 
-    const exists = await prisma.organization.findUnique({ where: { email } });
+    const exists = await prisma.user.findUnique({ where: { email } });
     if (exists) return res.status(400).json({ message: "Email already exists" });
 
+    // Create the user
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    const org = await prisma.organization.create({
-      data: { name, email, password: hashedPassword },
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        role: "ORGANIZATION",
+        firstName: name, // just store name as firstName for simplicity
+      },
     });
 
-    const { password: _, ...safeOrg } = org;
+    // Create the organization profile
+    const org = await prisma.organization.create({
+      data: {
+        userId: user.id,
+        name,
+      },
+      include: { user: true },
+    });
 
-    res.status(201).json({ message: "Organization registered", organization: safeOrg });
+    res.status(201).json({ message: "Organization registered", organization: org });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 // ========================
 // LOGIN (VOLUNTEER / ORG / ADMIN)
@@ -89,26 +114,40 @@ exports.login = async (req, res) => {
         return res.status(401).json({ message: "Invalid admin credentials" });
       }
 
-      const token = jwt.sign({ id: "admin", role: "admin" }, JWT_SECRET, { expiresIn: "7d" });
+      const token = jwt.sign({ id: "admin", role: "ADMIN" }, JWT_SECRET, { expiresIn: "7d" });
 
-      return res.json({ message: "Admin logged in", token, user: { email, role: "admin" } });
+      return res.json({ message: "Admin logged in", token, user: { email, role: "ADMIN" } });
     }
 
-    if (!["volunteer", "organization"].includes(role)) {
+    if (!["volunteer", "organization"].includes(role.toLowerCase())) {
       return res.status(400).json({ message: "Invalid role" });
     }
 
-    const user =
-      role === "volunteer"
-        ? await prisma.volunteer.findUnique({ where: { email } })
-        : await prisma.organization.findUnique({ where: { email } });
+    // Fetch user by email
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: {
+        volunteer: true,
+        organization: true,
+      },
+    });
 
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    // Check role matches
+    if ((role.toLowerCase() === "volunteer" && user.role !== "VOLUNTEER") ||
+        (role.toLowerCase() === "organization" && user.role !== "ORGANIZATION")) {
+      return res.status(403).json({ message: "Role mismatch" });
+    }
+
+    // Check password
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(400).json({ message: "Invalid credentials" });
 
-    const token = jwt.sign({ id: user.id, role }, JWT_SECRET, { expiresIn: "7d" });
+    // Generate JWT token
+    const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: "7d" });
+
+    // Send user profile without password
     const { password: _, ...safeUser } = user;
 
     res.json({ message: "Login successful", token, user: safeUser });
@@ -116,6 +155,7 @@ exports.login = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 // ========================
 // GOOGLE AUTH (VOLUNTEER / ORG)

@@ -20,8 +20,6 @@ router.put(
   uploadOrgProfilePhoto
 );
 
-module.exports = router;
-
 // Public: view organizations
 router.get("/", getAllOrganizations);
 router.get("/:id", getOrganizationById);

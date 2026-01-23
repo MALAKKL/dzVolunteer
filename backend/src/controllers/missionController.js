@@ -5,14 +5,29 @@ const prisma = new PrismaClient();
 // Create mission with skills & SDG
 exports.createMission = async (req, res) => {
   try {
+    // Validate organization exists
+    if (!req.user.organization) {
+      return res.status(400).json({ message: "User is not associated with an organization" });
+    }
+
     const organizationId = req.user.organization.id; // from auth middleware
     const { title, description, location, startDate, endDate, volunteersNeeded, skills, sdgId } = req.body;
+
+    // Validate required fields
+    if (!title || !description || !location || !startDate || !endDate) {
+      return res.status(400).json({ message: "Missing required fields: title, description, location, startDate, endDate" });
+    }
 
     // Validate SDG if provided
     let sdg = null;
     if (sdgId) {
       sdg = await prisma.sDG.findUnique({ where: { id: Number(sdgId) } });
       if (!sdg) return res.status(400).json({ message: "Invalid SDG selected" });
+    }
+
+    // Validate skills array format if provided
+    if (skills && !Array.isArray(skills)) {
+      return res.status(400).json({ message: "Skills must be an array" });
     }
 
     const mission = await prisma.mission.create({
@@ -23,15 +38,17 @@ exports.createMission = async (req, res) => {
         location,
         startDate: new Date(startDate),
         endDate: new Date(endDate),
-        volunteersNeeded,
+        volunteersNeeded: volunteersNeeded || 0,
         sdgId: sdg ? sdg.id : null,
-        skills: {
-          create: skills.map(s => ({
-            skillId: s.skillId,
-            mustBeVerified: s.mustBeVerified || false,
-            levelRequired: s.levelRequired || null
-          }))
-        }
+        ...(skills && skills.length > 0 && {
+          skills: {
+            create: skills.map(s => ({
+              skillId: s.skillId,
+              mustBeVerified: s.mustBeVerified || false,
+              levelRequired: s.levelRequired || null
+            }))
+          }
+        })
       },
       include: {
         skills: { include: { skill: true } },
@@ -198,8 +215,8 @@ exports.updateApplicationStatus = async (req, res) => {
 
 exports.archiveMission =async (req, res) => {
   try {
-    const id = Number(req.params.id);
-    const mission = await prisma.mission.update({ where: { id }, data: { status: 'archived' } });
+    const id = req.params.id;
+    const mission = await prisma.mission.update({ where: { id }, data: { isArchived: true } });
     res.json(mission);
   } catch (err) {
     console.error(err); res.status(500).json({ message: 'Erreur serveur' });
@@ -211,7 +228,8 @@ exports.searchMissions =async (req, res) => {
   try {
     const { q, city } = req.query;
     const where = {
-      status: 'published',
+      isPublished: true,
+      isArchived: false,
       AND: []
     };
     if (q) {
@@ -223,11 +241,11 @@ exports.searchMissions =async (req, res) => {
       });
     }
     if (city) {
-      where.AND.push({ location: { equals: city, mode: 'insensitive' } });
+      where.AND.push({ location: { contains: city, mode: 'insensitive' } });
     }
     // if no conditions besides status, remove AND
     if (where.AND.length === 0) delete where.AND;
-    const missions = await prisma.mission.findMany({ where, orderBy: { date: 'asc' } });
+    const missions = await prisma.mission.findMany({ where, orderBy: { startDate: 'asc' } });
     res.json(missions);
   } catch (err) {
     console.error(err); res.status(500).json({ message: 'Erreur serveur' });

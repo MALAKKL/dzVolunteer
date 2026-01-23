@@ -3,12 +3,12 @@ const prisma = new PrismaClient();
 // volunteer applies to mission (auth required)
 async function applyToMission(req, res) {
   try {
-    const volunteerId = req.user.id;
-    const missionId = Number(req.params.missionId);
+    const volunteerId = req.user.volunteer.id;
+    const missionId = req.params.missionId;
 
     // check mission exists & published
     const mission = await prisma.mission.findUnique({ where: { id: missionId } });
-    if (!mission || mission.status !== 'published') {
+    if (!mission || !mission.isPublished || mission.isArchived) {
       return res.status(400).json({ message: 'Mission non disponible' });
     }
 
