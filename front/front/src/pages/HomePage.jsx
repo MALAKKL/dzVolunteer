@@ -5,17 +5,20 @@ import { MdEmail } from "react-icons/md";
 import { useNavigate, useLocation } from "react-router-dom";
 
 import NavbarVisitor from "../components/navBarVisitor";
+import NavbarUser from "../components/navBarUser";
 import "../styles/homePage.css";
 import { FaMapMarkerAlt, FaEnvelope, FaClock, FaPhone } from "react-icons/fa";
 import { useEffect, useRef, useState } from "react";
 import Counter from "../components/Counter";
 import { useMemo } from "react";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function Home() {
   const [activeSection, setActiveSection] = useState("home")
   const sectionRefs = useRef({})
   const Navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   
   const [missions, setMissions] = useState([])
   const [missionsLoading, setMissionsLoading] = useState(true)
@@ -111,300 +114,171 @@ export default function Home() {
     const element = sectionRefs.current[section]
     if (element) {
       element.scrollIntoView({ behavior: "smooth" })
+      setActiveSection(section)
     }
   }
 
-  const handleMissionClick = (missionId) => {
-    console.log('Mission clicked:', missionId)
-  }
-
   return (
-    <div className="app">
-      <NavbarVisitor
-        sections={sections}
-        activeSection={activeSection}
-        handleNavClick={handleNavClick}
-      />
+    <div>
+      {user ? (
+        <NavbarUser sections={sections} activeSection={activeSection} handleNavClick={handleNavClick} />
+      ) : (
+        <NavbarVisitor sections={sections} activeSection={activeSection} handleNavClick={handleNavClick} />
+      )}
 
-      <div className="app-container">
-        {/* home section */}
-        <section id="home" ref={(el) => (sectionRefs.current["home"] = el)} className="section home-section">
-          <div className="home-content">
-            <h1>Turn Your Time Into Hope</h1>
-            <p>Find missions, support communities, and help build a better <h3 style={{color:"#EF8451", fontSize:"30px"}}>Algeria</h3> one action at a time.</p>
-            <div className="social-icons">
-              <a href="https://www.facebook.com/profile.php?id=61586081911948" className="social-icon">
-                <FaFacebookF size={20} />
-              </a>
-              <a href="mailto:dzvolunteer970@gmail.com" className="social-icon" aria-label="Send us an email">
-                <MdEmail size={20} />
-              </a>
-              <a href="https://instagram.com" className="social-icon">
-                <FaInstagram size={20} />
-              </a>
-            </div>
-            <button className="join-btn" onClick={() => Navigate("/signup")}>Join us</button>
-          </div>
-          <div className="home-image">
-            <img src="/vol1.png" alt="Volunteer" />
-          </div>
-        </section>
-
-        {/* about section */}
-        <section id="about" ref={(el) => (sectionRefs.current["about"] = el)} className="section about-section">
-          <div className="about-container">
-            <div className="about-image">
-              <img src="/vol2.png" alt="About Us" />
-            </div>
-            <div className="about-content">
-              <h2>About Us</h2>
-              <p>
-                At DZ Volunteer, we believe that every small action can create a big impact. We connect volunteers and
-                turn compassion into action.
-              </p>
-              <p>
-                Our platform makes it safe, accessible, and rewarding for anyone to become a volunteer. By connecting
-                individuals with organizations that need them, we create meaningful interactions across Algeria.
-              </p>
-              <p>Together, we inspire positive change and empower citizens to take action in their communities.</p>
-            </div>
-          </div>
-        </section>
-
-        {/* missions section */}
-        <section id="missions" ref={(el) => (sectionRefs.current["missions"] = el)} className="section missions-section">
-          <div className="missions-header">
-            <h2>Current Missions</h2>
-            <p>Make a difference today, one step at a time</p>
-          </div>
-
-          {missionsLoading && (
-            <div style={{ textAlign: 'center', padding: '2rem' }}>
-              <p>Loading missions...</p>
-            </div>
-          )}
-
-          {missionsError && !missionsLoading && (
-            <div style={{ textAlign: 'center', padding: '2rem', color: '#EF8451' }}>
-              <p>Unable to load missions. Showing cached data.</p>
-            </div>
-          )}
-
-          {!missionsLoading && (
-            <>
-              <div className="missions-grid">
-                {missions.map((mission) => (
-                  <div className="mission-card" key={mission.id}>
-                    <div className="mission-image">
-                      <img 
-                        src={mission.image || '/placeholder.jpg'} 
-                        alt={mission.title}
-                        onError={(e) => {
-                          e.target.src = '/placeholder.jpg'
-                        }}
-                      />
-                    </div>
-                    <div className="mission-content">
-                      <h3>{mission.title}</h3>
-                      <p>{mission.description}</p>
-                      <button 
-                        className="mission-btn"
-                        onClick={() => handleMissionClick(mission.id)}
-                      >
-                        See more
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="missions-footer">
-                <button className="view-all-btn" onClick={() => Navigate("/missions")}>
-                  Search for missions
-                </button>
-              </div>
-            </>
-          )}
-        </section>
-
-        {/* organizations section */}
-        <section id="organizations" ref={(el) => (sectionRefs.current["organizations"] = el)} className="section organizations-section">
-          <div className="organizations-header">
-            <h2>Top Organizations</h2>
-            <p>Explore the top organizations turning passion into meaningful change</p>
-          </div>
-
-          <div className="organizations-grid">
-            {[
-              {
-                type: "Nature",
-                name: "Green Algeria",
-                description: "  جزائر خضراء باذن الله  ",
-                img: "/green.jpg"
-              },
-              {
-                type: "Education",
-                name: "Learn Together",
-                description: "Promoting literacy and learning opportunities.",
-                img: "/learn.jpg"
-              },
-              {
-                type: "Health",
-                name: "Health Aid",
-                description: "Supporting medical aid and community health programs.",
-                img: "/aid.jpeg"
-              },
-            ].map((org, index) => (
-              <div className="org-card" key={index}>
-                <img src={org.img} alt={org.name} className="org-img" />
-                <h3>{org.type}</h3>
-                <p><strong>{org.name}</strong></p>
-                <p>{org.description}</p>
-                <button className="mission-btn">See more</button>
-              </div>
-            ))}
-          </div>
-          
-          <div className="missions-footer">
-            <button className="view-all-btn" onClick={() => Navigate("/organizations")}>
-              Search for Organizations
+      {/* Hero Section */}
+      <section id="home" ref={(el) => (sectionRefs.current.home = el)} className="hero-section">
+        <div className="hero-content">
+          <h1 className="hero-title">
+            Make a Difference in Your Community
+          </h1>
+          <p className="hero-subtitle">
+            Join thousands of volunteers making a positive impact across Algeria. Find missions that match your skills and passion.
+          </p>
+          <div className="hero-buttons">
+            <button className="btn-primary" onClick={() => Navigate("/missions")}>
+              Explore Missions
+            </button>
+            <button className="btn-secondary" onClick={() => Navigate("/organizations")}>
+              View Organizations
             </button>
           </div>
+        </div>
+        <div className="hero-image">
+          <img src="/hero-image.jpg" alt="Volunteers helping community" />
+        </div>
+      </section>
 
-          {/* volunteers section */}
-          <div className="volunteers-section">
-            <h3>Our Most Inspiring Volunteers</h3>
-            <p style={{ marginBottom: "2rem", opacity: 0.95 }}>
-              Highlighting the volunteers whose dedication drives our missions forward
+      {/* About Section */}
+      <section id="about" ref={(el) => (sectionRefs.current.about = el)} className="about-section">
+        <div className="container">
+          <div className="about-content">
+            <h2>About DZ Volunteer</h2>
+            <p>
+              DZ Volunteer is a platform connecting passionate individuals with meaningful volunteer opportunities across Algeria. Whether you're a student looking to gain experience, a professional wanting to give back, or someone seeking to make new connections, we have the perfect mission for you.
             </p>
-            <div className="volunteers-grid">
-              <div className="volunteer">
-                <div className="volunteer-avatar">
-                  <img src="/" alt="Grimed Ikram" />
-                </div>
-                <div className="volunteer-name">Grimed Ikram</div>
-              </div>
-              <div className="volunteer">
-                <div className="volunteer-avatar">
-                  <img src="/" alt="Boudjerda Malak" />
-                </div>
-                <div className="volunteer-name">Boudjerda Malak</div>
-              </div>
-              <div className="volunteer">
-                <div className="volunteer-avatar">
-                  <img src="/" alt="Kouda Rania" />
-                </div>
-                <div className="volunteer-name">Kouda Rania</div>
-              </div>
-              <div className="volunteer">
-                <div className="volunteer-avatar">
-                  <img src="/" alt="Boukersi Asma" />
-                </div>
-                <div className="volunteer-name">Boukersi Asma</div>
-              </div>
-            </div>
-
             <div className="stats">
               <div className="stat">
-                <div className="stat-number">+<Counter target={1000} duration={4000} /></div>
-                <div className="stat-label">Organizations</div>
+                <Counter end={5000} suffix="+" />
+                <span>Active Volunteers</span>
               </div>
               <div className="stat">
-                <div className="stat-number">+<Counter target={1450} duration={4000}/></div>
-                <div className="stat-label">Volunteers</div>
+                <Counter end={200} suffix="+" />
+                <span>Partner Organizations</span>
               </div>
               <div className="stat">
-                <div className="stat-number">+<Counter target={250} duration={4000}/></div>
-                <div className="stat-label">Missions</div>
-              </div>
-              <div className="stat">
-                <div className="stat-number">+<Counter target={560} duration={4000}/></div>
-                <div className="stat-label">Completed</div>
+                <Counter end={1000} suffix="+" />
+                <span>Missions Completed</span>
               </div>
             </div>
           </div>
-        </section>
-
-        {/* Contact section */}
-        <section id="contact" ref={(el) => (sectionRefs.current["contact"] = el)} className="section contact-section">
-          <div className="contact-header">
-            <h2>Be the change you want to see — join us today!</h2>
-            <p>Join DZ Volunteers and turn compassion into action</p>
+          <div className="about-image">
+            <img src="/about-image.jpg" alt="About DZ Volunteer" />
           </div>
+        </div>
+      </section>
 
-          <div className="contact-container">
-            <div className="contact-form">
-              <h3>Get in touch with us</h3>
-              <form onSubmit={(e) => e.preventDefault()}>
-                <div className="form-group">
-                  <label htmlFor="email">Email</label>
-                  <input type="email" id="email" placeholder="your@email.com" />
+      {/* Missions Section */}
+      <section id="missions" ref={(el) => (sectionRefs.current.missions = el)} className="missions-section">
+        <div className="container">
+          <h2>Featured Missions</h2>
+          <p>Discover volunteer opportunities that align with your interests and skills.</p>
+          {missionsLoading ? (
+            <div className="loading">Loading missions...</div>
+          ) : missionsError ? (
+            <div className="error">Error loading missions: {missionsError}</div>
+          ) : (
+            <div className="missions-grid">
+              {missions.slice(0, 3).map((mission) => (
+                <div key={mission.id} className="mission-card">
+                  <img src={mission.image || "/default-mission.jpg"} alt={mission.title} />
+                  <h3>{mission.title}</h3>
+                  <p>{mission.description}</p>
+                  <button className="btn-outline" onClick={() => Navigate(`/missioncard/${mission.id}`)}>
+                    Learn More
+                  </button>
                 </div>
-                <div className="form-group">
-                  <label htmlFor="message">Message</label>
-                  <textarea id="message" placeholder="Type your message here..."></textarea>
-                </div>
-                <button type="submit" className="submit-btn">Submit</button>
-              </form>
+              ))}
             </div>
+          )}
+          <div className="view-all">
+            <button className="btn-primary" onClick={() => Navigate("/missions")}>
+              View All Missions
+            </button>
+          </div>
+        </div>
+      </section>
 
-            <div className="contact-details">
-              <h3>Contact Details</h3>
-              <p style={{color:"black", marginTop:"20px"}}>If you have any questions at all, we're here to help! Our friendly team is ready to assist you and provide the answers you need. Feel free to contact us anytime.</p> <br/>
-              <div className="detail-item">
-                <div className="detail-icon"><FaMapMarkerAlt /></div>
-                <div className="detail-content">
-                  <h4>Address</h4>
-                  <p>Algiers, Algeria</p>
-                </div>
-              </div>
-
-              <div className="detail-item">
-                <div className="detail-icon"><FaMobileAlt /></div>
-                <div className="detail-content">
-                  <h4>Mobile</h4>
-                  <p>+213 558 10 30 40</p>
-                </div>
-              </div>
-
-              <div className="detail-item">
-                <div className="detail-icon"><FaEnvelope /></div>
-                <div className="detail-content">
-                  <h4>Email</h4>
-                  <p>info@dzvolunteer.com</p>
-                </div>
-              </div>
-
-              <div className="detail-item">
-                <div className="detail-icon"><FaClock /></div>
-                <div className="detail-content">
-                  <h4>Availability</h4>
-                  <p>Available 24/7</p>
-                </div>
-              </div>
+      {/* Organizations Section */}
+      <section id="organizations" ref={(el) => (sectionRefs.current.organizations = el)} className="organizations-section">
+        <div className="container">
+          <h2>Partner Organizations</h2>
+          <p>Work with established organizations making a real difference in communities.</p>
+          <div className="organizations-grid">
+            <div className="organization-card">
+              <img src="/org1.jpg" alt="Red Crescent" />
+              <h3>Red Crescent</h3>
+              <p>Providing humanitarian aid and disaster relief across Algeria.</p>
+            </div>
+            <div className="organization-card">
+              <img src="/org2.jpg" alt="Green Future" />
+              <h3>Green Future</h3>
+              <p>Environmental conservation and sustainability initiatives.</p>
+            </div>
+            <div className="organization-card">
+              <img src="/org3.jpg" alt="Education for All" />
+              <h3>Education for All</h3>
+              <p>Improving access to quality education for all Algerians.</p>
             </div>
           </div>
+          <div className="view-all">
+            <button className="btn-primary" onClick={() => Navigate("/organizations")}>
+              View All Organizations
+            </button>
+          </div>
+        </div>
+      </section>
 
-          <div className="footer">
-            <p>
-              <FaPhone /> +213 558 10 30 40 • <FaEnvelope /> info@dzvolunteer.com
-            </p>
-
-            <div className="footer-icons">
-              <div className="social-icons">
-                <a href="https://www.facebook.com/profile.php?id=61586081911948" className="social-icon">
-                  <FaFacebookF size={20} />
-                </a>
-                <a href="https://linkedin.com" className="social-icon">
-                  <MdEmail size={20} />
-                </a>
-                <a href="https://instagram.com" className="social-icon">
-                  <FaInstagram size={20} />
-                </a>
+      {/* Contact Section */}
+      <section id="contact" ref={(el) => (sectionRefs.current.contact = el)} className="contact-section">
+        <div className="container">
+          <h2>Contact Us</h2>
+          <div className="contact-content">
+            <div className="contact-info">
+              <div className="contact-item">
+                <FaMapMarkerAlt />
+                <span>Algiers, Algeria</span>
+              </div>
+              <div className="contact-item">
+                <FaEnvelope />
+                <span>info@dzvolunteer.dz</span>
+              </div>
+              <div className="contact-item">
+                <FaPhone />
+                <span>+213 XX XX XX XX</span>
+              </div>
+              <div className="contact-item">
+                <FaClock />
+                <span>Mon - Fri: 9AM - 6PM</span>
               </div>
             </div>
+            <div className="social-links">
+              <a href="#" className="social-link">
+                <FaFacebookF />
+              </a>
+              <a href="#" className="social-link">
+                <SiX />
+              </a>
+              <a href="#" className="social-link">
+                <FaInstagram />
+              </a>
+              <a href="#" className="social-link">
+                <FaWhatsapp />
+              </a>
+            </div>
           </div>
-        </section>
-      </div>
+        </div>
+      </section>
     </div>
   )
 }

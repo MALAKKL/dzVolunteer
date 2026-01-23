@@ -6,6 +6,8 @@ import { FaUser, FaBuilding, FaEnvelope, FaLock } from "react-icons/fa"
 import "../App.css" // global styles (OK)
 import styles from "../styles/signUp.module.css" 
 import { authAPI } from "../utils/api" 
+import { useAuth } from "../contexts/AuthContext"
+import { useNavigate } from "react-router-dom"
 
 export default function SignupForm() {
   const [accountType, setAccountType] = useState("volunteer")
@@ -18,6 +20,8 @@ export default function SignupForm() {
   })
   const [errors, setErrors] = useState({})
   const [isLoading, setIsLoading] = useState(false)
+  const { login } = useAuth()
+  const navigate = useNavigate()
 
   const validateForm = () => {
     const newErrors = {}
@@ -93,6 +97,15 @@ export default function SignupForm() {
 
       if (response.message) {
         alert(`Account created successfully as ${accountType}!`)
+        // Auto-login after signup
+        const loginResponse = await login({
+          email: formData.email,
+          password: formData.password,
+          role: accountType
+        });
+        if (loginResponse.token) {
+          navigate('/'); // Redirect to homepage
+        }
         // Reset form
         setFormData({
           firstName: "",

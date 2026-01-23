@@ -4,12 +4,16 @@ import { useState } from "react"
 import { FaEnvelope, FaLock } from "react-icons/fa"
 import styles from "../styles/signUp.module.css"
 import { authAPI } from "../utils/api"
+import { useAuth } from "../contexts/AuthContext"
+import { useNavigate } from "react-router-dom"
 
 export default function LoginForm({ accountType, setAccountType, userInfo, setUserInfo }) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
+  const { login } = useAuth()
+  const navigate = useNavigate()
 
   const validateForm = () => {
     const newErrors = {}
@@ -33,17 +37,12 @@ export default function LoginForm({ accountType, setAccountType, userInfo, setUs
 
     try {
       const role = accountType === "volunteer" ? "volunteer" : "organization"
-      const response = await authAPI.login({ email, password, role })
+      const response = await login({ email, password, role })
 
       if (response.token) {
-        // Get user profile
-        const profileResponse = await authAPI.getProfile()
-        setUserInfo({
-          accountType,
-          email,
-          ...profileResponse,
-        })
+        // Get user profile is now handled in AuthContext
         alert(`Welcome back! You've been logged in.`)
+        navigate('/') // Redirect to homepage
       } else {
         setErrors({ form: response.message || "Login failed" })
       }
