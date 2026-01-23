@@ -266,7 +266,7 @@ export default function Home() {
           
           <div className="missions-footer">
             <button className="view-all-btn" onClick={() => Navigate("/organizations")}>
-              see all organizations
+              Search for Organizations
             </button>
           </div>
 

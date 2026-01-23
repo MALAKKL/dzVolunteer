@@ -1,8 +1,9 @@
-import styles from "./MissionCard.module.css";
+// src/components/MissionCard.jsx
+import styles from "../components/MissionCard.module.css";
 import { WhatsappIcon, InstagramIcon, FacebookIcon, LinkedinIcon } from "./SocialIcons";
 
-function MissionCard({ mission, showApplyButton = false, onApply = () => {} }) {
-  if (!mission) return <p>Loading mission...</p>;
+function MissionCard({ mission }) {
+  if (!mission) return <p>Loading mission...</p>; // safety check
 
   return (
     <div className={styles.projectCard}>
@@ -35,28 +36,17 @@ function MissionCard({ mission, showApplyButton = false, onApply = () => {} }) {
 
         <div className={styles.infoSection}>
           <label className={styles.infoLabel}>VOLUNTEERS NEEDED</label>
-          <p className={styles.infoText}>
-            {mission.number} slots available
-          </p>
+          <p className={styles.infoText}>{mission.number} slots available</p>
         </div>
 
         <div className={styles.infoSection}>
           <label className={styles.infoLabel}>COMPETENCIES REQUIRED</label>
           <div className={styles.competencies}>
             {mission.competencies?.map((c, i) => (
-              <button key={i} className={styles.competencyTag}>
-                {c}
-              </button>
+              <button key={i} className={styles.competencyTag}>{c}</button>
             ))}
           </div>
         </div>
-
-        {/* 🔹 APPLY BUTTON */}
-        {showApplyButton && (
-          <button className={styles.applyButton} onClick={onApply}>
-            Apply Now
-          </button>
-        )}
 
         <div className={styles.socialLinks}>
           <a href="#" className={styles.socialIcon} aria-label="WhatsApp">
@@ -78,3 +68,4 @@ function MissionCard({ mission, showApplyButton = false, onApply = () => {} }) {
 }
 
 export default MissionCard;
+

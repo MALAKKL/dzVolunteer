@@ -5,7 +5,6 @@ import styles from "../styles/dashOrg.module.css"
 import { useState } from "react"
 import { useNavigate } from "react-router-dom";
 
-
 export default function Missions() {
   const [showCreateModal, setShowCreateModal] = useState(false)
  const Navigate=useNavigate();
@@ -114,12 +113,9 @@ export default function Missions() {
               <p className={styles["mission-date"]}>{mission.date}</p>
               <p className={styles["mission-location"]}>{mission.location}</p>
             </div>
-          <button
-  className={`${styles["mission-details-btn"]} ${styles.current}`}
-  onClick={() =>Navigate("/edit_mission")}
->
-  edit
-</button>
+            <button className={`${styles["mission-details-btn"]} ${styles.current}`} onClick={() => handleMissionDetails(mission.id)}>
+            edit
+            </button>
           </div>
         </div>
       ))}

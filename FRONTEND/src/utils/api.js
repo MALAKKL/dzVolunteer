@@ -9,9 +9,12 @@ const getAuthToken = () => {
 const authFetch = async (url, options = {}) => {
   const token = getAuthToken();
   const headers = {
-    'Content-Type': 'application/json',
     ...options.headers,
   };
+
+  if (!(options.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   if (token) {
     headers.Authorization = `Bearer ${token}`;
@@ -174,6 +177,14 @@ export const organizationsAPI = {
     });
     return response.json();
   },
+
+  uploadOrganizationProfilePhoto: async (formData) => {
+    const response = await authFetch('/organizations/profile/photo', {
+      method: 'PUT',
+      body: formData,
+    });
+    return response.json();
+  },
 };
 
 // Volunteers API
@@ -200,16 +211,6 @@ export const volunteersAPI = {
     const response = await authFetch('/volunteers/me', {
       method: 'DELETE',
     });
-    return response.json();
-  },
-
-  getMyApplications: async () => {
-    const response = await authFetch('/applications/my-applications');
-    return response.json();
-  },
-
-  getMyParticipations: async () => {
-    const response = await authFetch('/participations/my-participations');
     return response.json();
   },
 };
