@@ -66,7 +66,33 @@ function ProfileCard({ volunteer }) {
         <h2 className={styles.cardTitle}>My Profile</h2>
       </div>
 
-      <div className={styles.profilePhoto}>{volunteer.photo}</div>
+      <div className={styles.profilePhoto} onClick={() => document.getElementById('volunteer-photo-input').click()} style={{ cursor: "pointer", overflow: "hidden" }}>
+        {volunteer.photo === '👤' ? '👤' : (
+          <img src={volunteer.photo} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        )}
+      </div>
+      <input
+        type="file"
+        id="volunteer-photo-input"
+        style={{ display: "none" }}
+        accept="image/*"
+        onChange={async (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            const formData = new FormData();
+            formData.append('photo', file);
+            try {
+              const res = await volunteersAPI.uploadVolunteerProfilePhoto(formData);
+              if (res.photo) {
+                alert("Photo uploaded!");
+                window.location.reload();
+              }
+            } catch (err) {
+              alert("Upload failed");
+            }
+          }
+        }}
+      />
 
       <div className={styles.profileInfo}>
         <h2>{volunteer.firstName} {volunteer.lastName}</h2>

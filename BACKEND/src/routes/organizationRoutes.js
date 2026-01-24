@@ -3,15 +3,16 @@ const {
   getAllOrganizations,
   getOrganizationById,
   updateOrganization,
+  validateParticipation,
+  uploadOrgProfilePhoto
 } = require("../controllers/organizatonController");
 const uploadOrgPhoto = require("../middleware/uploadMiddleware");
-const { uploadOrgProfilePhoto } = require("../controllers//organizatonController");
 
 const { authenticate, authorize } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-//uploadphoto for org
+// Upload photo for org
 router.put(
   "/profile/photo",
   authenticate,
@@ -26,5 +27,8 @@ router.get("/:id", getOrganizationById);
 
 // Protected: update own organization
 router.put("/:id", authenticate, authorize("ORGANIZATION"), updateOrganization);
+
+// Validate hours
+router.post("/validate-participation", authenticate, authorize("ORGANIZATION"), validateParticipation);
 
 module.exports = router;

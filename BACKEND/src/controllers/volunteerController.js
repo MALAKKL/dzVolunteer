@@ -62,4 +62,49 @@ async function deleteMyAccount(req, res) {
   }
 }
 
-module.exports = { getMyProfile, updateMyProfile, deleteMyAccount };
+// Upload profile photo
+async function uploadVolunteerPhoto(req, res) {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    const photoPath = `/uploads/volunteers/${req.file.filename}`;
+
+    await prisma.volunteer.update({
+      where: { id: req.user.volunteer.id },
+      data: { photo: photoPath },
+    });
+
+    res.json({
+      message: "Profile photo uploaded successfully",
+      photo: photoPath,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error.message });
+  }
+}
+
+// Get top volunteers by hours
+async function getTopVolunteers(req, res) {
+  try {
+    const topVolunteers = await prisma.volunteer.findMany({
+      take: 4,
+      orderBy: { totalHoursVolunteered: 'desc' },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        photo: true,
+        totalHoursVolunteered: true
+      }
+    });
+    res.json(topVolunteers);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error fetching top volunteers" });
+  }
+}
+
+module.exports = { getVolunteers, getMyProfile, updateMyProfile, deleteMyAccount, uploadVolunteerPhoto, getTopVolunteers };

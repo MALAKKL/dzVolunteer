@@ -58,26 +58,16 @@ async function getMyApplications(req, res) {
 async function getMyParticipations(req, res) {
   try {
     const volunteerId = req.user.volunteer.id;
-    // Assuming COMPLETED status or similar tracks participation history
-    // For now we return approved/completed
-    const participations = await prisma.application.findMany({
-      where: {
-        volunteerId,
-        status: { in: ['APPROVED', 'COMPLETED'] }
-      },
+    const participations = await prisma.participation.findMany({
+      where: { volunteerId },
       include: {
         mission: {
           include: { organization: true }
         }
       },
-      orderBy: { appliedAt: 'desc' }
+      orderBy: { validatedAt: 'desc' }
     });
-    // Add dummy hours if not tracking properly in schema yet
-    const result = participations.map(p => ({
-      ...p,
-      hoursCompleted: p.hoursWorked || 0 // Assuming field might exist or fallback
-    }));
-    res.json(result);
+    res.json(participations);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Erreur serveur' });

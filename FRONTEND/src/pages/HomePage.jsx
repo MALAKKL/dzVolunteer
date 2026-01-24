@@ -22,6 +22,9 @@ export default function Home() {
   const [missionsLoading, setMissionsLoading] = useState(true)
   const [missionsError, setMissionsError] = useState(null)
 
+  const [topOrganizations, setTopOrganizations] = useState([]);
+  const [topVolunteers, setTopVolunteers] = useState([]);
+
   const sections = useMemo(() => ["home", "about", "missions", "organizations", "contact"], [])
 
   // Handle hash navigation when coming from other pages
@@ -64,13 +67,15 @@ export default function Home() {
   }, [sections])
 
   // Fetch missions from backend
+  // Fetch missions, organizations and top volunteers
   useEffect(() => {
-    const fetchMissions = async () => {
+    const fetchData = async () => {
+      const { organizationsAPI, volunteersAPI } = await import("../utils/api");
+
+      // Fetch missions
       try {
         setMissionsLoading(true)
         const data = await missionsAPI.getAllMissions();
-
-        // Take 3 latest missions
         if (data && Array.isArray(data)) {
           setMissions(data.slice(0, 3));
         }
@@ -78,32 +83,32 @@ export default function Home() {
       } catch (error) {
         console.error('Error fetching missions:', error)
         setMissionsError(error.message)
-        setMissions([
-          {
-            id: 1,
-            title: "Medical",
-            description: "Support our health-care community",
-            image: "/sante.jpg"
-          },
-          {
-            id: 2,
-            title: "Nature",
-            description: "Protect our environment together",
-            image: "/nature.jpg"
-          },
-          {
-            id: 3,
-            title: "Social",
-            description: "Build stronger communities",
-            image: "/social.jpg"
-          }
-        ])
       } finally {
         setMissionsLoading(false)
       }
+
+      // Fetch organizations
+      try {
+        const orgsResponse = await organizationsAPI.getAllOrganizations("", 3, 0);
+        if (orgsResponse.data) {
+          setTopOrganizations(orgsResponse.data);
+        }
+      } catch (error) {
+        console.error('Error fetching orgs:', error);
+      }
+
+      // Fetch top volunteers
+      try {
+        const volsResponse = await volunteersAPI.getTopVolunteers();
+        if (volsResponse) {
+          setTopVolunteers(volsResponse);
+        }
+      } catch (error) {
+        console.error('Error fetching top vols:', error);
+      }
     }
 
-    fetchMissions()
+    fetchData()
   }, [])
 
   const handleNavClick = (section) => {
@@ -235,32 +240,18 @@ export default function Home() {
           </div>
 
           <div className="organizations-grid">
-            {[
-              {
-                type: "Nature",
-                name: "Green Algeria",
-                description: "  جزائر خضراء باذن الله  ",
-                img: "/green.jpg"
-              },
-              {
-                type: "Education",
-                name: "Learn Together",
-                description: "Promoting literacy and learning opportunities.",
-                img: "/learn.jpg"
-              },
-              {
-                type: "Health",
-                name: "Health Aid",
-                description: "Supporting medical aid and community health programs.",
-                img: "/aid.jpeg"
-              },
-            ].map((org, index) => (
-              <div className="org-card" key={index}>
-                <img src={org.img} alt={org.name} className="org-img" />
-                <h3>{org.type}</h3>
+            {topOrganizations.map((org, index) => (
+              <div className="org-card" key={org.id || index}>
+                <img
+                  src={org.logo ? `${API_BASE_URL}${org.logo}` : "/green.jpg"}
+                  alt={org.name}
+                  className="org-img"
+                  onError={(e) => e.target.src = "/green.jpg"}
+                />
+                <h3>{org.fieldOfActivity || "Organization"}</h3>
                 <p><strong>{org.name}</strong></p>
-                <p>{org.description}</p>
-                <button className="mission-btn">See more</button>
+                <p>{org.description ? (org.description.substring(0, 100) + "...") : "No description available."}</p>
+                <button className="mission-btn" onClick={() => Navigate(`/organization/${org.id}`)}>See more</button>
               </div>
             ))}
           </div>
@@ -278,30 +269,20 @@ export default function Home() {
               Highlighting the volunteers whose dedication drives our missions forward
             </p>
             <div className="volunteers-grid">
-              <div className="volunteer">
-                <div className="volunteer-avatar">
-                  <img src="/" alt="Grimed Ikram" />
+              {topVolunteers.map((vol, index) => (
+                <div className="volunteer" key={vol.id || index}>
+                  <div className="volunteer-avatar" style={{ overflow: "hidden" }}>
+                    <img
+                      src={vol.photo ? `${API_BASE_URL}${vol.photo}` : "/vol1.png"}
+                      alt={`${vol.firstName} ${vol.lastName}`}
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      onError={(e) => e.target.src = "/vol1.png"}
+                    />
+                  </div>
+                  <div className="volunteer-name">{vol.firstName} {vol.lastName}</div>
+                  <div className="volunteer-hours" style={{ fontSize: "0.8rem", opacity: 0.8 }}>{vol.totalHoursVolunteered} hrs</div>
                 </div>
-                <div className="volunteer-name">Grimed Ikram</div>
-              </div>
-              <div className="volunteer">
-                <div className="volunteer-avatar">
-                  <img src="/" alt="Boudjerda Malak" />
-                </div>
-                <div className="volunteer-name">Boudjerda Malak</div>
-              </div>
-              <div className="volunteer">
-                <div className="volunteer-avatar">
-                  <img src="/" alt="Kouda Rania" />
-                </div>
-                <div className="volunteer-name">Kouda Rania</div>
-              </div>
-              <div className="volunteer">
-                <div className="volunteer-avatar">
-                  <img src="/" alt="Boukersi Asma" />
-                </div>
-                <div className="volunteer-name">Boukersi Asma</div>
-              </div>
+              ))}
             </div>
 
             <div className="stats">

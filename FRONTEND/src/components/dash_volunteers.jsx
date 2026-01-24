@@ -29,14 +29,14 @@ export default function Volunteers() {
               applicants.forEach(app => {
                 allApplicants.push({
                   id: app.id, // Application ID
+                  volunteerId: app.volunteerId,
+                  missionId: mission.id,
                   name: `${app.volunteer.firstName} ${app.volunteer.lastName}`,
-                  email: app.volunteer.email || "N/A", // Backend might not send email in public profile? Check.
-                  // Actually volunteer object in 'getMissionApplicants' might be limited. 
-                  // But usually for Org viewing applicants, it should share details.
+                  email: app.volunteer.email || "N/A",
                   phone: app.volunteer.phone || "N/A",
                   mission: mission.title,
                   appliedDate: app.appliedAt,
-                  status: app.status.toLowerCase(), // Backend is usually uppercase PENDING
+                  status: app.status.toLowerCase(),
                   skills: app.volunteer.skills ? app.volunteer.skills.map(s => s.name).join(", ") : "N/A",
                   availability: app.volunteer.availabilities || "N/A"
                 });
@@ -198,6 +198,42 @@ export default function Volunteers() {
                           </div>
                         </div>
                       </div>
+
+                      {volunteer.status === "approved" && (
+                        <div className={styles["volunteer-actions"]}>
+                          <div style={{ display: "flex", gap: "5px" }}>
+                            <input
+                              type="number"
+                              placeholder="Hrs"
+                              style={{ width: "60px", padding: "5px", borderRadius: "5px", border: "1px solid #ccc" }}
+                              id={`hours-${volunteer.id}`}
+                            />
+                            <button
+                              className={styles["btn-approve"]}
+                              onClick={async () => {
+                                const hrs = document.getElementById(`hours-${volunteer.id}`).value;
+                                if (!hrs) return alert("Please enter hours");
+                                try {
+                                  // We need missionId here. 
+                                  // Let's assume the volunteer object has missionId if we fetch it correctly
+                                  // For now, let's just use a simplified prompt or lookup
+                                  // I'll update the fetch logic to include missionId
+                                  await organizationsAPI.validateParticipation({
+                                    missionId: volunteer.missionId,
+                                    volunteerId: volunteer.volunteerId,
+                                    hoursCompleted: parseInt(hrs)
+                                  });
+                                  alert("Hours validated!");
+                                } catch (err) {
+                                  alert("Error validating hours");
+                                }
+                              }}
+                            >
+                              Validate
+                            </button>
+                          </div>
+                        </div>
+                      )}
 
                       {volunteer.status === "pending" && (
                         <div className={styles["volunteer-actions"]}>

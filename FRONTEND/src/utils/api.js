@@ -186,12 +186,33 @@ export const organizationsAPI = {
     });
     return response.json();
   },
+
+  validateParticipation: async (data) => {
+    const response = await authFetch('/organizations/validate-participation', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return response.json();
+  },
 };
 
 // Volunteers API
 export const volunteersAPI = {
   getAllVolunteers: async () => {
     const response = await fetch(`${API_URL}/volunteers`);
+    return response.json();
+  },
+
+  getTopVolunteers: async () => {
+    const response = await fetch(`${API_URL}/volunteers/top`);
+    return response.json();
+  },
+
+  uploadVolunteerProfilePhoto: async (formData) => {
+    const response = await authFetch('/volunteers/profile/photo', {
+      method: 'PUT',
+      body: formData,
+    });
     return response.json();
   },
 

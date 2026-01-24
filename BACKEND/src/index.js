@@ -32,8 +32,7 @@ const adminRoutes = require("./routes/adminRoutes");
 const sdgRoutes = require("./routes/sdgRoutes");
 const missionRoutes = require('./routes/missionRoutes');
 const applicationRoutes = require("./routes/applicationRoutes");
-
-
+const volunteerRoutes = require("./routes/volunteerRoutes");
 
 // Public mission routes (Includes search)
 app.use("/api/missions", missionRoutesPublic);
@@ -41,7 +40,7 @@ app.use("/api/missions", missionRoutesPublic);
 // Organization-only mission routes
 app.use("/api/organization/missions", missionRoutesOrg);
 
-// Organization routes (view/update profile)
+// Organization routes (profile management, photo, validation)
 app.use("/api/organizations", organizationRoutes);
 
 // Auth routes
@@ -52,6 +51,9 @@ app.use("/api/admin", adminRoutes);
 
 // Public SDGs
 app.use("/api/sdgs", sdgRoutes);
+
+// Volunteer routes (profile management, top volunteers, photo)
+app.use("/api/volunteers", volunteerRoutes);
 
 // Application routes (Apply, My Applications)
 app.use("/api/applications", applicationRoutes);
@@ -65,19 +67,6 @@ app.use("/uploads", express.static("uploads"));
 // Test route
 app.get("/", (req, res) => {
   res.send("Backend is running!");
-});
-
-// Example route to get all volunteers along with their skills
-app.get("/volunteers", async (req, res) => {
-  try {
-    const volunteers = await prisma.volunteer.findMany({
-      include: { skills: true },
-    });
-    res.json(volunteers);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Something went wrong" });
-  }
 });
 
 // Start server
