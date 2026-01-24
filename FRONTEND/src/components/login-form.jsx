@@ -39,37 +39,30 @@ export default function LoginForm({ accountType, setAccountType, userInfo, setUs
       const response = await authAPI.login({ email, password, role: rolePar })
 
       if (response.token) {
-        // Fetch full profile to be sure of the role
-        let profile;
-        try {
-          profile = await authAPI.getProfile();
-        } catch (e) {
-          console.error("Failed to fetch profile", e);
-          profile = response.user; // Fallback
-        }
+        console.log("Login successful! Role:", response.user?.role)
 
-        const finalRole = profile?.role || response.user?.role;
-
-        if (finalRole) {
-          localStorage.setItem("role", finalRole);
-        }
+        // Save essentials
+        localStorage.setItem("role", response.user?.role || "VOLUNTEER")
 
         setUserInfo({
           accountType,
           email,
-          ...profile,
+          ...response.user
         })
 
-        // Redirect based on role (using location.href to force refresh)
-        if (finalRole === "ADMIN") {
-          window.location.href = "/admindashboard";
-        } else if (finalRole === "VOLUNTEER") {
-          window.location.href = "/voldashboard";
-        } else if (finalRole === "ORGANIZATION") {
-          window.location.href = "/orgdashboard";
-        } else {
-          window.location.href = "/";
-        }
+        // Force a small delay to ensure token is stored safely in all browsers before redirect
+        setTimeout(() => {
+          const role = response.user?.role
+          if (role === "ADMIN") {
+            window.location.href = "/admindashboard"
+          } else if (role === "VOLUNTEER") {
+            window.location.href = "/voldashboard"
+          } else if (role === "ORGANIZATION") {
+            window.location.href = "/orgdashboard"
+          } else {
+            window.location.href = "/"
+          }
+        }, 100)
       } else {
         setErrors({ form: response.message || "Login failed" })
       }
