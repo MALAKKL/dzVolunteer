@@ -1,14 +1,27 @@
 const multer = require("multer");
 const path = require("path");
 
+const fs = require('fs');
+
 // Storage configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/organizations");
+    let folder = "uploads/organizations";
+
+    // Check role or path to determine folder
+    if (req.user?.role === "VOLUNTEER" || req.originalUrl.includes("volunteer")) {
+      folder = "uploads/volunteers";
+    }
+
+    // Ensure directory exists
+    if (!fs.existsSync(folder)) {
+      fs.mkdirSync(folder, { recursive: true });
+    }
+
+    cb(null, folder);
   },
   filename: (req, file, cb) => {
-    const uniqueName =
-      Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const uniqueName = Date.now() + "-" + Math.round(Math.random() * 1e9);
     cb(null, uniqueName + path.extname(file.originalname));
   },
 });

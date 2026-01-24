@@ -85,7 +85,10 @@ function ProfileCard({ volunteer }) {
               const res = await volunteersAPI.uploadVolunteerProfilePhoto(formData);
               if (res.photo) {
                 alert("Photo uploaded!");
-                window.location.reload();
+                // Trigger navbar refresh
+                window.dispatchEvent(new Event("profileUpdate"));
+                // Small delay before reload to ensure backend sync
+                setTimeout(() => window.location.reload(), 500);
               }
             } catch (err) {
               alert("Upload failed");
@@ -317,6 +320,13 @@ export default function Dashboard() {
   }, []);
 
   const transformProfile = (data) => {
+    let photoUrl = '👤';
+    const rawPhoto = data.volunteer?.photo;
+
+    if (rawPhoto) {
+      photoUrl = rawPhoto.startsWith('http') ? rawPhoto : `${API_BASE_URL}${rawPhoto}`;
+    }
+
     return {
       id: data.id,
       firstName: data.firstName,
@@ -325,7 +335,7 @@ export default function Dashboard() {
       interests: data.interests || [],
       location: 'Alger, Algérie', // Assuming default, or get from user
       availability: data.availabilities || 'Not specified',
-      photo: data.volunteer?.photo ? `${API_BASE_URL}${data.volunteer.photo}` : '👤',
+      photo: photoUrl,
       skills: (data.volunteer?.skills || []).map(s => ({
         id: s.id,
         name: s.skill?.name || "Skill",

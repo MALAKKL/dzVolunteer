@@ -32,10 +32,18 @@ export default function NavbarVisitor({ sections, activeSection, handleNavClick 
   const fetchProfilePic = async () => {
     try {
       const profile = await authAPI.getProfile();
-      if (profile.organization?.logo) {
-        setProfilePic(`${API_BASE_URL}${profile.organization.logo}`);
-      } else if (profile.volunteer?.photo) {
-        setProfilePic(`${API_BASE_URL}${profile.volunteer.photo}`);
+      let photoUrl = null;
+
+      if (profile.role === "ORGANIZATION" && profile.organization?.logo) {
+        photoUrl = profile.organization.logo;
+      } else if (profile.role === "VOLUNTEER" && profile.volunteer?.photo) {
+        photoUrl = profile.volunteer.photo;
+      }
+
+      if (photoUrl) {
+        // If it's a relative path, prepend base URL
+        const finalUrl = photoUrl.startsWith('http') ? photoUrl : `${API_BASE_URL}${photoUrl}`;
+        setProfilePic(finalUrl);
       } else {
         setProfilePic(profile.role === "ORGANIZATION" ? "/origo.png" : "/vol1.png");
       }
