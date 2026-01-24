@@ -5,14 +5,29 @@ const prisma = new PrismaClient();
 // Create mission with skills & SDG
 exports.createMission = async (req, res) => {
   try {
+    console.log("Create Mission Request Body:", req.body);
+    console.log("User in request:", req.user?.id, req.user?.role);
+
     // Validate organization exists
     if (!req.user.organization) {
+      console.error("Missing organization for user:", req.user?.id);
       return res.status(400).json({ message: "User is not associated with an organization" });
     }
 
-    const organizationId = req.user.organization.id; // from auth middleware
-    const { title, description, location, startDate, endDate, volunteersNeeded, skills, sdgId } = req.body;
+    const organizationId = req.user.organization.id;
+    let { title, description, location, startDate, endDate, volunteersNeeded, skills, sdgId } = req.body;
     const image = req.file ? `/uploads/missions/${req.file.filename}` : null;
+
+    // Handle multipart string parsing
+    if (skills && typeof skills === 'string') {
+      try {
+        skills = JSON.parse(skills);
+      } catch (e) {
+        console.warn("Failed to parse skills JSON", e);
+      }
+    }
+
+    if (sdgId) sdgId = Number(sdgId);
 
     // Validate required fields
     if (!title || !description || !location || !startDate || !endDate) {
@@ -22,13 +37,8 @@ exports.createMission = async (req, res) => {
     // Validate SDG if provided
     let sdg = null;
     if (sdgId) {
-      sdg = await prisma.sDG.findUnique({ where: { id: Number(sdgId) } });
+      sdg = await prisma.sDG.findUnique({ where: { id: sdgId } });
       if (!sdg) return res.status(400).json({ message: "Invalid SDG selected" });
-    }
-
-    // Validate skills array format if provided
-    if (skills && !Array.isArray(skills)) {
-      return res.status(400).json({ message: "Skills must be an array" });
     }
 
     const mission = await prisma.mission.create({
@@ -41,9 +51,9 @@ exports.createMission = async (req, res) => {
         endDate: new Date(endDate),
         volunteersNeeded: volunteersNeeded ? parseInt(volunteersNeeded) : 0,
         sdgId: sdg ? sdg.id : null,
-        isPublished: true, // Explicitly set to true
-        image: image, // Add image path
-        ...(skills && { // Handle skills if provided (complex parsing if multipart)
+        isPublished: true,
+        image: image,
+        ...(skills && Array.isArray(skills) && {
           skills: {
             create: skills.map(s => ({
               skillId: s.skillId,
@@ -61,8 +71,8 @@ exports.createMission = async (req, res) => {
 
     res.status(201).json({ message: "Mission created", mission });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
+    console.error("MISSION CREATION ERROR:", err);
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 };
 

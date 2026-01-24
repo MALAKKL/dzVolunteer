@@ -15,6 +15,7 @@ const authenticate = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // Fetch user from database
+    console.log("Authenticating user with ID:", decoded.id);
     const user = await prisma.user.findUnique({
       where: { id: decoded.id },
       include: {
@@ -34,9 +35,11 @@ const authenticate = async (req, res, next) => {
     });
 
     if (!user) {
+      console.error("User not found for token ID:", decoded.id);
       return res.status(401).json({ error: "Invalid token" });
     }
 
+    console.log("Authenticated user role:", user.role, "Has Org:", !!user.organization);
     req.user = user;
     next();
   } catch (error) {
