@@ -16,23 +16,45 @@ const authenticate = async (req, res, next) => {
 
     // Fetch user from database
     console.log("Authenticating user with ID:", decoded.id);
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.id },
-      include: {
-        organization: {
-          include: {
-            missions: {
-              orderBy: { startDate: "asc" }
+
+    let user;
+    if (decoded.id === "admin") {
+      // Return a virtual admin user
+      user = { id: "admin", role: "ADMIN", email: process.env.ADMIN_EMAIL };
+    } else {
+      user = await prisma.user.findUnique({
+        where: { id: decoded.id },
+        include: {
+          organization: {
+            include: {
+              missions: {
+                orderBy: { startDate: "asc" }
+              }
             }
-          }
+          },
+          volunteer: {
+            include: {
+              skills: { include: { skill: true } }
+            }
+          },
         },
-        volunteer: {
-          include: {
-            skills: { include: { skill: true } }
-          }
-        },
-      },
-    });
+      });
+
+      // --- MIDDLEWARE REPAIR ---
+      if (user) {
+        if (user.role === "VOLUNTEER" && !user.volunteer) {
+          console.log(`Middleware Repair: Creating volunteer for ${user.id}`);
+          await prisma.volunteer.create({
+            data: { userId: user.id, firstName: user.firstName || "User", lastName: user.lastName || "Volunteer" }
+          });
+          // Re-fetch with relations
+          user = await prisma.user.findUnique({
+            where: { id: user.id },
+            include: { volunteer: { include: { skills: { include: { skill: true } } } }, organization: true }
+          });
+        }
+      }
+    }
 
     if (!user) {
       console.error("User not found for token ID:", decoded.id);

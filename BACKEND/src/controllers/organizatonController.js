@@ -105,7 +105,10 @@ exports.uploadOrgProfilePhoto = async (req, res) => {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    const photoPath = `/uploads/organizations/${req.file.filename}`;
+    // If using Cloudinary, path is in req.file.path. If local, it's the filename.
+    const photoPath = req.file.path.startsWith('http')
+      ? req.file.path
+      : `/uploads/organizations/${req.file.filename}`;
 
     await prisma.organization.update({
       where: { userId: req.user.id },

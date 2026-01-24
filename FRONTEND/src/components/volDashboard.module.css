@@ -283,18 +283,18 @@
 }
 
 .statusPending {
-  background-color: #bee3f8;
-  color: #2c5282;
+  background-color: #fef3c7;
+  color: #92400e;
 }
 
 .statusAccepted {
-  background-color: #c6f6d5;
-  color: #22543d;
+  background-color: #d1fae5;
+  color: #065f46;
 }
 
 .statusRejected {
-  background-color: #fed7d7;
-  color: #742a2a;
+  background-color: #fee2e2;
+  color: #b91c1c;
 }
 
 .appDetails {

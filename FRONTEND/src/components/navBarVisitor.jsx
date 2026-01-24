@@ -53,18 +53,18 @@ export default function NavbarVisitor({ sections, activeSection, handleNavClick 
   };
 
   const handleDashboardClick = () => {
-    // Roles are typically "VOLUNTEER" or "ORGANIZATION" (or lowercase)
-    const normalizedRole = userRole ? userRole.toUpperCase() : "";
-
-    // Check local storage again just in case state is stale
-    const currentRole = localStorage.getItem("role") ? localStorage.getItem("role").toUpperCase() : normalizedRole;
+    const currentRole = localStorage.getItem("role") ? localStorage.getItem("role").toUpperCase() : "";
 
     console.log("Navigating to dashboard with role:", currentRole);
 
-    if (currentRole === "ORGANIZATION") {
+    if (currentRole === "ADMIN") {
+      navigate("/admindashboard");
+    } else if (currentRole === "ORGANIZATION") {
       navigate("/orgdashboard");
-    } else {
+    } else if (currentRole === "VOLUNTEER") {
       navigate("/voldashboard");
+    } else {
+      navigate("/");
     }
   };
 

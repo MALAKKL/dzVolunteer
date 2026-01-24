@@ -29,6 +29,18 @@ exports.importSDGs = async (req, res) => {
   }
 };
 
+// Get all SDGs
+exports.getAllSDGs = async (req, res) => {
+  try {
+    const sdgs = await prisma.sDG.findMany({
+      orderBy: { id: 'asc' }
+    });
+    res.json(sdgs);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 // Filter missions by SDG
 exports.getMissionsBySDG = async (req, res) => {
   try {

@@ -69,7 +69,10 @@ async function uploadVolunteerPhoto(req, res) {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    const photoPath = `/uploads/volunteers/${req.file.filename}`;
+    // If using Cloudinary, path is in req.file.path. If local, it's the filename.
+    const photoPath = req.file.path.startsWith('http')
+      ? req.file.path
+      : `/uploads/volunteers/${req.file.filename}`;
 
     await prisma.volunteer.update({
       where: { id: req.user.volunteer.id },
@@ -107,4 +110,69 @@ async function getTopVolunteers(req, res) {
   }
 }
 
-module.exports = { getVolunteers, getMyProfile, updateMyProfile, deleteMyAccount, uploadVolunteerPhoto, getTopVolunteers };
+// Add skill with certificate (V2 with better checks)
+async function addSkillWithCertificate(req, res) {
+  try {
+    console.log("--> POST /api/volunteers/skills reached");
+    console.log("Body:", req.body);
+    console.log("File:", req.file ? req.file.filename : "No file");
+
+    const { skillId } = req.body;
+
+    if (!req.user || !req.user.volunteer) {
+      return res.status(401).json({ error: "Volunteer profile required." });
+    }
+
+    const volunteerId = req.user.volunteer.id;
+
+    if (!skillId) {
+      return res.status(400).json({ error: "Skill ID is required." });
+    }
+
+    // Check if skill exists in catalog
+    const skillExists = await prisma.skill.findUnique({ where: { id: skillId } });
+    if (!skillExists) {
+      console.error(`Skill Addition Error: Skill ${skillId} not found in catalog`);
+      return res.status(404).json({ message: "The selected skill does not exist in our catalog." });
+    }
+
+    // Check if skill already exists for this volunteer
+    const existing = await prisma.volunteerSkill.findUnique({
+      where: { volunteerId_skillId: { volunteerId, skillId } }
+    });
+
+    if (existing) {
+      console.warn(`Skill Addition: Volunteer ${volunteerId} already has skill ${skillId}`);
+      return res.status(400).json({ message: "Skill already added to your profile" });
+    }
+
+    const certificatePath = req.file ? (req.file.path.startsWith('http') ? req.file.path : `/uploads/certificates/${req.file.filename}`) : null;
+
+    console.log(`Skill Addition: Creating record for V:${volunteerId}, S:${skillId}`);
+    const volunteerSkill = await prisma.volunteerSkill.create({
+      data: {
+        volunteerId,
+        skillId,
+        certificate: certificatePath,
+        status: "PENDING"
+      },
+      include: { skill: true }
+    });
+
+    console.log("Skill Addition Success!");
+    res.status(201).json(volunteerSkill);
+  } catch (error) {
+    console.error("Detailed Skill Addition Crash:", error);
+    res.status(500).json({ error: error.message || "Internal server error during skill addition" });
+  }
+}
+
+module.exports = {
+  getVolunteers,
+  getMyProfile,
+  updateMyProfile,
+  deleteMyAccount,
+  uploadVolunteerPhoto,
+  getTopVolunteers,
+  addSkillWithCertificate
+};

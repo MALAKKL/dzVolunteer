@@ -34,23 +34,42 @@ export default function LoginForm({ accountType, setAccountType, userInfo, setUs
     setErrors({})
 
     try {
-      const role = accountType === "volunteer" ? "volunteer" : "organization"
-      const response = await authAPI.login({ email, password, role })
+      // Role parameter for standard users, admin is handled by email match on backend
+      const rolePar = accountType === "volunteer" ? "volunteer" : "organization"
+      const response = await authAPI.login({ email, password, role: rolePar })
 
       if (response.token) {
-        // Get user profile
-        const profileResponse = await authAPI.getProfile()
-        if (profileResponse.role) {
-          localStorage.setItem("role", profileResponse.role)
+        // Fetch full profile to be sure of the role
+        let profile;
+        try {
+          profile = await authAPI.getProfile();
+        } catch (e) {
+          console.error("Failed to fetch profile", e);
+          profile = response.user; // Fallback
+        }
+
+        const finalRole = profile?.role || response.user?.role;
+
+        if (finalRole) {
+          localStorage.setItem("role", finalRole);
         }
 
         setUserInfo({
           accountType,
           email,
-          ...profileResponse,
+          ...profile,
         })
-        alert(`Welcome back! You've been logged in.`)
-        navigate("/")
+
+        // Redirect based on role (using location.href to force refresh)
+        if (finalRole === "ADMIN") {
+          window.location.href = "/admindashboard";
+        } else if (finalRole === "VOLUNTEER") {
+          window.location.href = "/voldashboard";
+        } else if (finalRole === "ORGANIZATION") {
+          window.location.href = "/orgdashboard";
+        } else {
+          window.location.href = "/";
+        }
       } else {
         setErrors({ form: response.message || "Login failed" })
       }

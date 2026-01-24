@@ -7,7 +7,8 @@ const {
     updateMyProfile,
     deleteMyAccount,
     uploadVolunteerPhoto,
-    getTopVolunteers
+    getTopVolunteers,
+    addSkillWithCertificate
 } = require("../controllers/volunteerController");
 const upload = require('../middleware/uploadMiddleware');
 
@@ -22,5 +23,8 @@ router.delete('/me', authenticate, authorize('VOLUNTEER'), deleteMyAccount);
 
 // Upload photo
 router.put('/profile/photo', authenticate, authorize('VOLUNTEER'), upload.single('photo'), uploadVolunteerPhoto);
+
+// Add skill with certificate
+router.post('/skills', authenticate, authorize('VOLUNTEER'), upload.single('certificate'), addSkillWithCertificate);
 
 module.exports = router;

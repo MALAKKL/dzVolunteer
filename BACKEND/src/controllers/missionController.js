@@ -16,7 +16,12 @@ exports.createMission = async (req, res) => {
 
     const organizationId = req.user.organization.id;
     let { title, description, location, startDate, endDate, volunteersNeeded, skills, sdgId } = req.body;
-    const image = req.file ? `/uploads/missions/${req.file.filename}` : null;
+
+    // Cloudinary path is in req.file.path, local path is constructs from filename
+    let image = null;
+    if (req.file) {
+      image = req.file.path.startsWith('http') ? req.file.path : `/uploads/missions/${req.file.filename}`;
+    }
 
     // Handle multipart string parsing
     if (skills && typeof skills === 'string') {

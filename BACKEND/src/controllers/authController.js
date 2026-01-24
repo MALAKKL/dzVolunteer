@@ -152,6 +152,26 @@ exports.login = async (req, res) => {
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(400).json({ message: "Invalid credentials" });
 
+    // --- AUTO-REPAIR ON LOGIN ---
+    if (user.role === "VOLUNTEER" && !user.volunteer) {
+      console.log(`Login Repair: Creating volunteer for ${user.id}`);
+      user.volunteer = await prisma.volunteer.create({
+        data: {
+          userId: user.id,
+          firstName: user.firstName || "Volunteer",
+          lastName: user.lastName || "User",
+        }
+      });
+    } else if (user.role === "ORGANIZATION" && !user.organization) {
+      console.log(`Login Repair: Creating organization for ${user.id}`);
+      user.organization = await prisma.organization.create({
+        data: {
+          userId: user.id,
+          name: user.firstName ? `${user.firstName} ${user.lastName || ""}` : "Organization",
+        }
+      });
+    }
+
     // Generate JWT token
     const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET || "your-secret-key", { expiresIn: "7d" });
 
@@ -309,8 +329,52 @@ exports.resetPassword = async (req, res) => {
 // getprofile
 exports.getProfile = async (req, res) => {
   try {
-    console.log("Fetching profile for user:", req.user?.id);
-    res.status(200).json(req.user);
+    const userId = req.user.id;
+
+    // Admin repair: admin has no DB record, handled in middleware
+    if (userId === "admin") {
+      return res.json(req.user);
+    }
+
+    // Refresh user data from DB with all relations
+    let user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        volunteer: { include: { skills: { include: { skill: true } } } },
+        organization: true,
+      }
+    });
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // --- AUTO-REPAIR LOGIC ---
+    // If user has role but missing profile record, create it now
+    if (user.role === "VOLUNTEER" && !user.volunteer) {
+      console.log(`Auto-repair: Creating missing volunteer for user ${user.id}`);
+      const volunteer = await prisma.volunteer.create({
+        data: {
+          userId: user.id,
+          firstName: user.firstName || "Volunteer",
+          lastName: user.lastName || "User",
+        }
+      });
+      // Re-fetch or update object
+      user.volunteer = await prisma.volunteer.findUnique({
+        where: { id: volunteer.id },
+        include: { skills: { include: { skill: true } } }
+      });
+    } else if (user.role === "ORGANIZATION" && !user.organization) {
+      console.log(`Auto-repair: Creating missing organization for user ${user.id}`);
+      user.organization = await prisma.organization.create({
+        data: {
+          userId: user.id,
+          name: user.firstName ? `${user.firstName} ${user.lastName || ""}` : "Organization",
+        }
+      });
+    }
+
+    const { password: _, ...safeUser } = user;
+    res.json(safeUser);
   } catch (error) {
     console.error("Error in getProfile:", error);
     res.status(500).json({ message: "Failed to load profile" });

@@ -1,4 +1,4 @@
-export const API_BASE_URL = 'http://localhost:5000';
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const API_URL = `${API_BASE_URL}/api`;
 
 // Helper function to get auth token
@@ -21,10 +21,34 @@ const authFetch = async (url, options = {}) => {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  return fetch(`${API_URL}${url}`, {
+  const response = await fetch(`${API_URL}${url}`, {
     ...options,
     headers,
   });
+
+  if (!response.ok) {
+    let errorMessage = `Request failed (Status ${response.status})`;
+    try {
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorData.error || errorData.errorMessage || errorMessage;
+      } else {
+        const textError = await response.text();
+        if (textError.includes("<!DOCTYPE html>") || textError.includes("<html>")) {
+          errorMessage = `Server Error (404/500). Please try again later.`;
+        } else {
+          errorMessage = textError.slice(0, 100) || errorMessage;
+        }
+      }
+    } catch (e) {
+      console.error("Error parsing error response", e);
+    }
+    console.error(`API Error [${url}]:`, errorMessage);
+    throw new Error(errorMessage);
+  }
+
+  return response;
 };
 
 // Auth API
@@ -245,10 +269,37 @@ export const volunteersAPI = {
     const response = await authFetch('/applications/my-participations');
     return response.json();
   },
+  addSkillWithCertificate: async (formData) => {
+    const response = await authFetch('/volunteers/skills', {
+      method: 'POST',
+      body: formData,
+    });
+    return response.json();
+  },
 };
+
+// Skills API (Catalog)
+export const skillsAPI = {
+  getAllSkills: async () => {
+    try {
+      const response = await fetch(`${API_URL}/skills`);
+      if (!response.ok) throw new Error(`Status ${response.status}`);
+      const data = await response.json();
+      console.log("API: Fetched skill catalog ->", data.length, "items");
+      return data;
+    } catch (error) {
+      console.error("API: Failed to fetch skills", error);
+      return [];
+    }
+  }
+}
 
 // SDGs API
 export const sdgsAPI = {
+  getAllSDGs: async () => {
+    const response = await fetch(`${API_URL}/sdgs`);
+    return response.json();
+  },
   getMissionsBySDG: async (sdgId) => {
     const response = await fetch(`${API_URL}/sdgs/missions?sdgId=${sdgId}`);
     return response.json();
@@ -257,10 +308,30 @@ export const sdgsAPI = {
 
 // Admin API
 export const adminAPI = {
-  verifySkill: async (data) => {
-    const response = await authFetch('/admin/skills/verify', {
+  getVolunteers: async () => {
+    const response = await authFetch('/admin/volunteers');
+    return response.json();
+  },
+
+  getOrganizations: async () => {
+    const response = await authFetch('/admin/organizations');
+    return response.json();
+  },
+
+  getPlatformUsers: async () => {
+    const response = await authFetch('/admin/users');
+    return response.json();
+  },
+
+  getPendingSkills: async () => {
+    const response = await authFetch('/admin/skills/pending');
+    return response.json();
+  },
+
+  verifySkill: async (id, status) => {
+    const response = await authFetch(`/admin/skills/${id}/verify`, {
       method: 'PUT',
-      body: JSON.stringify(data),
+      body: JSON.stringify({ status }),
     });
     return response.json();
   },

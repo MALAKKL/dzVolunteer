@@ -1,232 +1,29 @@
-'use client';
-
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import styles from '../components/dashAdmin.module.css';
+import { adminAPI, API_BASE_URL } from "../utils/api";
 
-// Mock Data
-const mockSkills = [
-  { id: 1, name: 'First Aid', verified: true, submittedDate: '2025-01-10' },
-  { id: 2, name: 'CPR', verified: true, submittedDate: '2025-01-08' },
-  { id: 3, name: 'Teaching', verified: false, submittedDate: '2025-01-20' },
-  { id: 4, name: 'Environmental Conservation', verified: false, submittedDate: '2025-01-22' },
-  { id: 5, name: 'Community Outreach', verified: true, submittedDate: '2025-01-05' },
-];
+const formatDate = (date) => date ? new Date(date).toLocaleDateString('en-US') : "N/A";
 
-const mockPendingValidations = [
-  {
-    id: 1,
-    volunteerName: 'Ahmed Salem',
-    skillName: 'First Aid',
-    status: 'Pending',
-    submittedDate: '2025-01-20',
-  },
-  {
-    id: 2,
-    volunteerName: 'Fatima Benali',
-    skillName: 'Environmental Conservation',
-    status: 'Pending',
-    submittedDate: '2025-01-22',
-  },
-  {
-    id: 3,
-    volunteerName: 'Mohammed Hassan',
-    skillName: 'Teaching',
-    status: 'Pending',
-    submittedDate: '2025-01-18',
-  },
-];
-
-const mockVolunteers = [
-  {
-    id: 1,
-    name: 'Ahmed Salem',
-    email: 'ahmed.salem@email.com',
-    totalHours: 125,
-    skills: ['First Aid', 'CPR'],
-    status: 'active',
-  },
-  {
-    id: 2,
-    name: 'Fatima Benali',
-    email: 'fatima.benali@email.com',
-    totalHours: 87,
-    skills: ['Environmental Conservation'],
-    status: 'active',
-  },
-  {
-    id: 3,
-    name: 'Mohammed Hassan',
-    email: 'mohammed.hassan@email.com',
-    totalHours: 156,
-    skills: ['Teaching', 'Community Outreach'],
-    status: 'active',
-  },
-];
-
-const mockOrganizations = [
-  {
-    id: 1,
-    name: 'Red Crescent',
-    field: 'Health',
-    creationDate: '2020-03-15',
-    missions: 24,
-    status: 'active',
-  },
-  {
-    id: 2,
-    name: 'Green Future',
-    field: 'Environment',
-    creationDate: '2021-06-20',
-    missions: 18,
-    status: 'active',
-  },
-  {
-    id: 3,
-    name: 'Education for All',
-    field: 'Education',
-    creationDate: '2019-11-10',
-    missions: 31,
-    status: 'active',
-  },
-];
-
-const mockMissions = [
-  {
-    id: 1,
-    title: 'Emergency Response Training',
-    organization: 'Red Crescent',
-    status: 'active',
-    odd: 'ODD 3',
-    requiredSkills: ['First Aid', 'CPR'],
-    date: '2025-02-15',
-  },
-  {
-    id: 2,
-    title: 'Tree Planting Initiative',
-    organization: 'Green Future',
-    status: 'active',
-    odd: 'ODD 13',
-    requiredSkills: ['Environmental Conservation'],
-    date: '2025-02-20',
-  },
-  {
-    id: 3,
-    title: 'Literacy Program',
-    organization: 'Education for All',
-    status: 'completed',
-    odd: 'ODD 4',
-    requiredSkills: ['Teaching'],
-    date: '2025-01-10',
-  },
-];
-
-const mockHoursAudit = [
-  {
-    id: 1,
-    mission: 'Emergency Response Training',
-    volunteer: 'Ahmed Salem',
-    organization: 'Red Crescent',
-    hours: 8,
-    date: '2025-01-15',
-  },
-  {
-    id: 2,
-    mission: 'Tree Planting Initiative',
-    volunteer: 'Fatima Benali',
-    organization: 'Green Future',
-    hours: 6,
-    date: '2025-01-18',
-  },
-  {
-    id: 3,
-    mission: 'Literacy Program',
-    volunteer: 'Mohammed Hassan',
-    organization: 'Education for All',
-    hours: 10,
-    date: '2025-01-12',
-  },
-];
-
-const odds = [
-  { id: 1, number: 1, title: 'No Poverty', missions: 5 },
-  { id: 2, number: 3, title: 'Good Health and Well-Being', missions: 12 },
-  { id: 3, number: 4, title: 'Quality Education', missions: 8 },
-  { id: 4, number: 13, title: 'Climate Action', missions: 6 },
-  { id: 5, number: 16, title: 'Peace, Justice and Strong Institutions', missions: 3 },
-];
-
-// Components
 function Sidebar({ activeTab, setActiveTab }) {
   return (
     <div className={styles.sidebar}>
-      <div className={styles.sidebarHeader}>
-        <div className={styles.sidebarLogo}>
-          🛡️ DZ Admin
-        </div>
+      <div className={styles.sidebarHeader} style={{ cursor: "pointer" }} onClick={() => window.location.href = "/"}>
+        <div className={styles.sidebarLogo}>🛡️ DZ Admin</div>
       </div>
       <ul className={styles.sidebarMenu}>
         <li>
-          <button
-            onClick={() => setActiveTab('dashboard')}
-            className={activeTab === 'dashboard' ? styles.active : ''}
-          >
-            📊 Dashboard
+          <button onClick={() => setActiveTab('dashboard')} className={`${styles.sidebarMenuButton} ${activeTab === 'dashboard' ? styles.active : ''}`}>
+            <span>📊</span> Global Console
           </button>
         </li>
         <li>
-          <button
-            onClick={() => setActiveTab('skill-validation')}
-            className={activeTab === 'skill-validation' ? styles.active : ''}
-          >
-            ✅ Skill Validation
+          <button onClick={() => setActiveTab('skill-validation')} className={`${styles.sidebarMenuButton} ${activeTab === 'skill-validation' ? styles.active : ''}`}>
+            <span>✅</span> Skill Verification
           </button>
         </li>
-        <li>
-          <button
-            onClick={() => setActiveTab('skills-management')}
-            className={activeTab === 'skills-management' ? styles.active : ''}
-          >
-            🎓 Skills Management
-          </button>
-        </li>
-        <li>
-          <button
-            onClick={() => setActiveTab('volunteers')}
-            className={activeTab === 'volunteers' ? styles.active : ''}
-          >
-            👥 Volunteers
-          </button>
-        </li>
-        <li>
-          <button
-            onClick={() => setActiveTab('organizations')}
-            className={activeTab === 'organizations' ? styles.active : ''}
-          >
-            🏢 Organizations
-          </button>
-        </li>
-        <li>
-          <button
-            onClick={() => setActiveTab('missions')}
-            className={activeTab === 'missions' ? styles.active : ''}
-          >
-            🎯 Missions
-          </button>
-        </li>
-        <li>
-          <button
-            onClick={() => setActiveTab('hours-audit')}
-            className={activeTab === 'hours-audit' ? styles.active : ''}
-          >
-            ⏱️ Hours Audit
-          </button>
-        </li>
-        <li>
-          <button
-            onClick={() => setActiveTab('odds')}
-            className={activeTab === 'odds' ? styles.active : ''}
-          >
-            🌍 ODD Management
+        <li style={{ marginTop: "auto", paddingTop: "20px", borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+          <button onClick={() => window.location.href = "/"} className={styles.sidebarMenuButton} style={{ opacity: 0.6 }}>
+            <span>🏠</span> Back to Site
           </button>
         </li>
       </ul>
@@ -237,80 +34,115 @@ function Sidebar({ activeTab, setActiveTab }) {
 function Header({ title }) {
   return (
     <div className={styles.header}>
-      <h1 className={styles.headerTitle}>{title}</h1>
+      <div>
+        <h1 className={styles.headerTitle}>{title}</h1>
+        <p style={{ fontSize: "0.85rem", opacity: 0.6 }}>Manage platform users and certifications</p>
+      </div>
       <div className={styles.headerUser}>
         <div className={styles.userAvatar}>AD</div>
-        <span>Admin</span>
+        <div className={styles.userInfo}>
+          <span style={{ fontWeight: "bold", display: "block" }}>Platform Admin</span>
+          <span style={{ fontSize: "0.75rem", opacity: 0.7 }}>Root Access</span>
+        </div>
+        <button
+          onClick={() => { localStorage.clear(); window.location.href = "/login"; }}
+          className={styles.btnLogout}
+        >
+          Logout
+        </button>
       </div>
     </div>
   );
 }
 
-function DashboardView() {
-  const totalVolunteers = mockVolunteers.length;
-  const totalOrganizations = mockOrganizations.length;
-  const activeMissions = mockMissions.filter((m) => m.status === 'active').length;
-  const totalHours = mockVolunteers.reduce((sum, v) => sum + v.totalHours, 0);
-  const pendingValidations = mockPendingValidations.length;
+function DashboardView({ stats, volunteers, organizations, onDelete }) {
+  const [filter, setFilter] = useState('VOLUNTEER'); // 'VOLUNTEER' or 'ORGANIZATION'
+
+  const displayList = filter === 'VOLUNTEER' ? volunteers : organizations;
 
   return (
-    <div>
+    <div className={styles.dashboardContainer}>
       <div className={styles.statsPanel}>
-        <div className={styles.statCard}>
-          <div className={styles.statLabel}>Total Volunteers</div>
-          <div className={styles.statValue}>{totalVolunteers}</div>
+        <div
+          className={`${styles.statCard} ${filter === 'VOLUNTEER' ? styles.statActive : ''}`}
+          onClick={() => setFilter('VOLUNTEER')}
+          style={{ cursor: "pointer" }}
+        >
+          <div className={styles.statLabel}>Volunteers</div>
+          <div className={styles.statValue}>{volunteers.length}</div>
+          <p style={{ fontSize: "0.75rem", marginTop: "10px", opacity: 0.7 }}>Click to manage individuals</p>
         </div>
-        <div className={styles.statCard}>
-          <div className={styles.statLabel}>Total Organizations</div>
-          <div className={styles.statValue}>{totalOrganizations}</div>
-        </div>
-        <div className={styles.statCard}>
-          <div className={styles.statLabel}>Active Missions</div>
-          <div className={styles.statValue}>{activeMissions}</div>
-        </div>
-        <div className={`${styles.statCard} ${styles.success}`}>
-          <div className={styles.statLabel}>Total Hours Volunteered</div>
-          <div className={styles.statValue}>{totalHours}</div>
+        <div
+          className={`${styles.statCard} ${filter === 'ORGANIZATION' ? styles.statActive : ''}`}
+          onClick={() => setFilter('ORGANIZATION')}
+          style={{ cursor: "pointer" }}
+        >
+          <div className={styles.statLabel}>Organizations</div>
+          <div className={styles.statValue}>{organizations.length}</div>
+          <p style={{ fontSize: "0.75rem", marginTop: "10px", opacity: 0.7 }}>Click to manage partners</p>
         </div>
         <div className={`${styles.statCard} ${styles.warning}`}>
-          <div className={styles.statLabel}>Pending Validations</div>
-          <div className={styles.statValue}>{pendingValidations}</div>
+          <div className={styles.statLabel}>Verification Requests</div>
+          <div className={styles.statValue}>{stats.pendingSkills}</div>
+          <p style={{ fontSize: "0.75rem", marginTop: "10px", opacity: 0.7 }}>Pending certification checks</p>
         </div>
       </div>
 
       <div className={styles.recentActivity}>
-        <h2 className={styles.sectionTitle}>Recent Activity</h2>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
+          <div>
+            <h2 className={styles.sectionTitle} style={{ marginBottom: "5px" }}>{filter === 'VOLUNTEER' ? 'Volunteer Directory' : 'Organization Directory'}</h2>
+            <p style={{ fontSize: "0.9rem", color: "#666" }}>Total Registered {filter === 'VOLUNTEER' ? 'Volunteers' : 'Organizations'}: {displayList.length}</p>
+          </div>
+          <div className={styles.tabGroup}>
+            <button
+              className={filter === 'VOLUNTEER' ? styles.tabActive : styles.tabInactive}
+              onClick={() => setFilter('VOLUNTEER')}
+            >Volunteers</button>
+            <button
+              className={filter === 'ORGANIZATION' ? styles.tabActive : styles.tabInactive}
+              onClick={() => setFilter('ORGANIZATION')}
+            >Organizations</button>
+          </div>
+        </div>
+
         <div className={styles.tableContainer}>
-          <table>
+          <table className={styles.table}>
             <thead>
               <tr>
-                <th>Type</th>
-                <th>Description</th>
-                <th>Date</th>
+                <th style={{ width: "15%" }}>Joined</th>
+                <th style={{ width: "35%" }}>{filter === 'VOLUNTEER' ? 'Volunteer Name' : 'Organization Name'}</th>
+                <th style={{ width: "30%" }}>Email</th>
+                <th style={{ width: "20%", textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>
-                  <span className={`${styles.badge} ${styles.pending}`}>Pending Validation</span>
-                </td>
-                <td>Mohammed Hassan - Teaching skill</td>
-                <td>2025-01-18</td>
-              </tr>
-              <tr>
-                <td>
-                  <span className={`${styles.badge} ${styles.verified}`}>Verified</span>
-                </td>
-                <td>Fatima Benali - Environmental Conservation</td>
-                <td>2025-01-22</td>
-              </tr>
-              <tr>
-                <td>
-                  <span className={`${styles.badge} ${styles.active}`}>Active Mission</span>
-                </td>
-                <td>Tree Planting Initiative - Green Future</td>
-                <td>2025-02-20</td>
-              </tr>
+              {displayList.map((user, idx) => (
+                <tr key={user.userId || idx}>
+                  <td style={{ fontSize: "0.85rem", opacity: 0.7 }}>{formatDate(user.joinedAt)}</td>
+                  <td>
+                    <div style={{ fontWeight: "700", color: "#1a202c" }}>{user.displayName}</div>
+                    {user.isPartial && <span style={{ fontSize: "10px", background: "#fef3c7", color: "#92400e", padding: "2px 6px", borderRadius: "4px", marginLeft: "10px" }}>Incomplete</span>}
+                  </td>
+                  <td style={{ color: "#4a5568", fontSize: "0.9rem" }}>{user.email}</td>
+                  <td style={{ textAlign: "right" }}>
+                    <button
+                      className={`${styles.btn} ${styles.btnDanger} ${styles.btnSm}`}
+                      onClick={() => onDelete(user.userId, user.displayName)}
+                      disabled={!user.userId}
+                    >
+                      🗑️ Delete Account
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {displayList.length === 0 && (
+                <tr>
+                  <td colSpan="4" style={{ textAlign: "center", padding: "60px", color: "#a0aec0", fontStyle: "italic" }}>
+                    No {filter.toLowerCase()}s found in the database.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -320,68 +152,68 @@ function DashboardView() {
 }
 
 function SkillValidationView() {
-  const [validations, setValidations] = useState(mockPendingValidations);
-  const [showModal, setShowModal] = useState(false);
-  const [selectedValidation, setSelectedValidation] = useState(null);
-  const [action, setAction] = useState(null);
+  const [validations, setValidations] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleValidation = (id) => {
-    setValidations(validations.filter((v) => v.id !== id));
-    setShowModal(false);
+  const fetchPending = async () => {
+    try {
+      setLoading(true);
+      const data = await adminAPI.getPendingSkills();
+      setValidations(Array.isArray(data) ? data : []);
+    } catch (e) { console.error("Admin: Failed to fetch skill queue", e); }
+    finally { setLoading(false); }
   };
+
+  useEffect(() => { fetchPending(); }, []);
+
+  const handleAction = async (id, status) => {
+    try {
+      await adminAPI.verifySkill(id, status);
+      alert(`Skill status updated: ${status}`);
+      fetchPending();
+    } catch (e) { alert("Action error: " + e.message); }
+  };
+
+  if (loading) return <div style={{ padding: "60px", textAlign: "center", opacity: 0.6 }}>Analyzing the queue...</div>;
 
   return (
     <div>
-      <h2 className={styles.sectionTitle}>Pending Skill Validations</h2>
-
+      <h2 className={styles.sectionTitle}>Skill Certification Queue</h2>
       {validations.length === 0 ? (
-        <div className={styles.emptyState}>
-          <div className={styles.emptyStateIcon}>✅</div>
-          <p>All skills have been validated!</p>
+        <div style={{ background: "#f8fafc", padding: "80px", borderRadius: "12px", textAlign: "center", border: "1px dashed #cbd5e0" }}>
+          <div style={{ fontSize: "3.5rem", marginBottom: "1.5rem" }}>🌈</div>
+          <p style={{ fontWeight: "bold", color: "#347362", fontSize: "1.2rem" }}>Everything is in order!</p>
+          <p style={{ opacity: 0.6 }}>No new certification requests to process at this time.</p>
         </div>
       ) : (
         <div className={styles.tableContainer}>
           <table>
             <thead>
               <tr>
-                <th>Volunteer Name</th>
-                <th>Skill Name</th>
-                <th>Status</th>
-                <th>Date Submitted</th>
-                <th>Actions</th>
+                <th>Volunteer</th>
+                <th>Skill</th>
+                <th>Proof</th>
+                <th>Decision</th>
               </tr>
             </thead>
             <tbody>
               {validations.map((v) => (
                 <tr key={v.id}>
-                  <td>{v.volunteerName}</td>
-                  <td>{v.skillName}</td>
+                  <td style={{ fontWeight: "bold" }}>{v.volunteer?.firstName} {v.volunteer?.lastName}</td>
+                  <td><span style={{ background: "#edf2f7", padding: "4px 10px", borderRadius: "6px", fontSize: "0.9rem" }}>{v.skill?.name}</span></td>
                   <td>
-                    <span className={`${styles.badge} ${styles.pending}`}>⏳ {v.status}</span>
+                    {v.certificate ? (
+                      <a href={`${API_BASE_URL}${v.certificate}`} target="_blank" rel="noreferrer" style={{ color: "#3182ce", textDecoration: "underline", fontWeight: "bold" }}>
+                        Open document
+                      </a>
+                    ) : (
+                      <span style={{ opacity: 0.4 }}>No file</span>
+                    )}
                   </td>
-                  <td>{v.submittedDate}</td>
                   <td>
-                    <div className={styles.btnGroup}>
-                      <button
-                        className={`${styles.btn} ${styles.btnSuccess} ${styles.btnSm}`}
-                        onClick={() => {
-                          setSelectedValidation(v);
-                          setAction('approve');
-                          setShowModal(true);
-                        }}
-                      >
-                        ✅ Approve
-                      </button>
-                      <button
-                        className={`${styles.btn} ${styles.btnDanger} ${styles.btnSm}`}
-                        onClick={() => {
-                          setSelectedValidation(v);
-                          setAction('reject');
-                          setShowModal(true);
-                        }}
-                      >
-                        ❌ Reject
-                      </button>
+                    <div style={{ display: "flex", gap: "10px" }}>
+                      <button className={`${styles.btn} ${styles.btnSuccess} ${styles.btnSm}`} onClick={() => handleAction(v.id, "VERIFIED")}>Approve</button>
+                      <button className={`${styles.btn} ${styles.btnDanger} ${styles.btnSm}`} onClick={() => handleAction(v.id, "REJECTED")}>Reject</button>
                     </div>
                   </td>
                 </tr>
@@ -390,507 +222,128 @@ function SkillValidationView() {
           </table>
         </div>
       )}
-
-      {showModal && selectedValidation && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modal}>
-            <div className={styles.modalHeader}>
-              {action === 'approve' ? 'Approve Skill' : 'Reject Skill'}
-            </div>
-            <div className={styles.modalBody}>
-              <p>
-                {action === 'approve'
-                  ? `Are you sure you want to approve ${selectedValidation.skillName} for ${selectedValidation.volunteerName}?`
-                  : `Are you sure you want to reject ${selectedValidation.skillName} for ${selectedValidation.volunteerName}?`}
-              </p>
-            </div>
-            <div className={styles.modalFooter}>
-              <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={() => setShowModal(false)}>
-                Cancel
-              </button>
-              <button
-                className={`${styles.btn} ${action === 'approve' ? styles.btnSuccess : styles.btnDanger}`}
-                onClick={() => handleValidation(selectedValidation.id, action)}
-              >
-                {action === 'approve' ? 'Approve' : 'Reject'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
 
-function SkillsManagementView() {
-  const [skills, setSkills] = useState(mockSkills);
-  const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({ name: '', verified: false });
-  const [editingId, setEditingId] = useState(null);
-
-  const handleAddSkill = () => {
-    if (editingId) {
-      setSkills(
-        skills.map((s) =>
-          s.id === editingId
-            ? { ...s, name: formData.name, verified: formData.verified }
-            : s,
-        ),
-      );
-      setEditingId(null);
-    } else {
-      setSkills([
-        ...skills,
-        {
-          id: Date.now(),
-          name: formData.name,
-          verified: formData.verified,
-          submittedDate: new Date().toISOString().split('T')[0],
-        },
-      ]);
-    }
-    setFormData({ name: '', verified: false });
-    setShowModal(false);
-  };
-
-  const handleEdit = (skill) => {
-    setFormData({ name: skill.name, verified: skill.verified });
-    setEditingId(skill.id);
-    setShowModal(true);
-  };
-
-  const handleDelete = (id) => {
-    setSkills(skills.filter((s) => s.id !== id));
-  };
-
-  return (
-    <div>
-      <div className={styles.pageHeader}>
-        <h2 className={styles.sectionTitle}>Skills Catalog</h2>
-        <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => {
-          setFormData({ name: '', verified: false });
-          setEditingId(null);
-          setShowModal(true);
-        }}>
-          + Add Skill
-        </button>
-      </div>
-
-      <div className={styles.tableContainer}>
-        <table>
-          <thead>
-            <tr>
-              <th>Skill Name</th>
-              <th>Verification Required</th>
-              <th>Date Added</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {skills.map((skill) => (
-              <tr key={skill.id}>
-                <td>{skill.name}</td>
-                <td>
-                  <span className={`${styles.badge} ${skill.verified ? styles.verified : styles.pending}`}>
-                    {skill.verified ? '✔️ Yes' : '❌ No'}
-                  </span>
-                </td>
-                <td>{skill.submittedDate}</td>
-                <td>
-                  <div className={styles.btnGroup}>
-                    <button
-                      className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm}`}
-                      onClick={() => handleEdit(skill)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className={`${styles.btn} ${styles.btnDanger} ${styles.btnSm}`}
-                      onClick={() => handleDelete(skill.id)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {showModal && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modal}>
-            <div className={styles.modalHeader}>
-              {editingId ? 'Edit Skill' : 'Add New Skill'}
-            </div>
-            <div className={styles.modalBody}>
-              <div className={styles.formGroup}>
-                <label>Skill Name</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Enter skill name"
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={formData.verified}
-                    onChange={(e) => setFormData({ ...formData, verified: e.target.checked })}
-                  />
-                  {' '}Verification Required
-                </label>
-              </div>
-            </div>
-            <div className={styles.modalFooter}>
-              <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={() => setShowModal(false)}>
-                Cancel
-              </button>
-              <button
-                className={`${styles.btn} ${styles.btnPrimary}`}
-                onClick={handleAddSkill}
-                disabled={!formData.name}
-              >
-                {editingId ? 'Update' : 'Add'} Skill
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function VolunteersView() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const filteredVolunteers = useMemo(
-    () => mockVolunteers.filter(
-      (v) => v.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        v.email.toLowerCase().includes(searchTerm.toLowerCase()),
-    ),
-    [searchTerm],
-  );
-
-  return (
-    <div>
-      <h2 className={styles.sectionTitle}>Volunteers Management</h2>
-
-      <div className={styles.filters}>
-        <input
-          type="text"
-          className={styles.filterInput}
-          placeholder="Search by name or email..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div>
-
-      <div className={styles.tableContainer}>
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Total Hours</th>
-              <th>Skills</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredVolunteers.map((volunteer) => (
-              <tr key={volunteer.id}>
-                <td>{volunteer.name}</td>
-                <td>{volunteer.email}</td>
-                <td>{volunteer.totalHours}h</td>
-                <td>{volunteer.skills.join(', ')}</td>
-                <td>
-                  <span className={`${styles.badge} ${styles.active}`}>Active</span>
-                </td>
-                <td>
-                  <div className={styles.btnGroup}>
-                    <button className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm}`}>View Profile</button>
-                    <button className={`${styles.btn} ${styles.btnWarning} ${styles.btnSm}`}>Suspend</button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-function OrganizationsView() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const filteredOrgs = useMemo(
-    () => mockOrganizations.filter(
-      (o) => o.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        o.field.toLowerCase().includes(searchTerm.toLowerCase()),
-    ),
-    [searchTerm],
-  );
-
-  return (
-    <div>
-      <h2 className={styles.sectionTitle}>Organizations Management</h2>
-
-      <div className={styles.filters}>
-        <input
-          type="text"
-          className={styles.filterInput}
-          placeholder="Search by name or field..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div>
-
-      <div className={styles.tableContainer}>
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Field</th>
-              <th>Creation Date</th>
-              <th>Missions</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredOrgs.map((org) => (
-              <tr key={org.id}>
-                <td>{org.name}</td>
-                <td>{org.field}</td>
-                <td>{org.creationDate}</td>
-                <td>{org.missions}</td>
-                <td>
-                  <span className={`${styles.badge} ${styles.active}`}>Active</span>
-                </td>
-                <td>
-                  <div className={styles.btnGroup}>
-                    <button className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm}`}>View Profile</button>
-                    <button className={`${styles.btn} ${styles.btnWarning} ${styles.btnSm}`}>Suspend</button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-function MissionsView() {
-  const [statusFilter, setStatusFilter] = useState('all');
-  const filteredMissions = useMemo(
-    () => statusFilter === 'all'
-      ? mockMissions
-      : mockMissions.filter((m) => m.status === statusFilter),
-    [statusFilter],
-  );
-
-  return (
-    <div>
-      <h2 className={styles.sectionTitle}>Missions Oversight</h2>
-
-      <div className={styles.tabs}>
-        <button
-          className={`${styles.tabButton} ${statusFilter === 'all' ? styles.active : ''}`}
-          onClick={() => setStatusFilter('all')}
-        >
-          All Missions
-        </button>
-        <button
-          className={`${styles.tabButton} ${statusFilter === 'active' ? styles.active : ''}`}
-          onClick={() => setStatusFilter('active')}
-        >
-          Active
-        </button>
-        <button
-          className={`${styles.tabButton} ${statusFilter === 'completed' ? styles.active : ''}`}
-          onClick={() => setStatusFilter('completed')}
-        >
-          Completed
-        </button>
-        <button
-          className={`${styles.tabButton} ${statusFilter === 'archived' ? styles.active : ''}`}
-          onClick={() => setStatusFilter('archived')}
-        >
-          Archived
-        </button>
-      </div>
-
-      <div className={styles.tableContainer}>
-        <table>
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Organization</th>
-              <th>ODD</th>
-              <th>Required Skills</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredMissions.map((mission) => (
-              <tr key={mission.id}>
-                <td>{mission.title}</td>
-                <td>{mission.organization}</td>
-                <td>{mission.odd}</td>
-                <td>{mission.requiredSkills.join(', ')}</td>
-                <td>
-                  <span className={`${styles.badge} ${mission.status === 'active' ? styles.active : styles.archived}`}>
-                    {mission.status}
-                  </span>
-                </td>
-                <td>
-                  <div className={styles.btnGroup}>
-                    <button className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm}`}>View</button>
-                    <button className={`${styles.btn} ${styles.btnWarning} ${styles.btnSm}`}>Archive</button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-function HoursAuditView() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const filteredAudit = useMemo(
-    () => mockHoursAudit.filter(
-      (a) => a.volunteer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        a.mission.toLowerCase().includes(searchTerm.toLowerCase()),
-    ),
-    [searchTerm],
-  );
-
-  return (
-    <div>
-      <h2 className={styles.sectionTitle}>Volunteering Hours Audit</h2>
-
-      <div className={styles.filters}>
-        <input
-          type="text"
-          className={styles.filterInput}
-          placeholder="Search by volunteer or mission..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div>
-
-      <div className={styles.tableContainer}>
-        <table>
-          <thead>
-            <tr>
-              <th>Mission</th>
-              <th>Volunteer</th>
-              <th>Organization Validator</th>
-              <th>Hours Validated</th>
-              <th>Validation Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredAudit.map((audit) => (
-              <tr key={audit.id}>
-                <td>{audit.mission}</td>
-                <td>{audit.volunteer}</td>
-                <td>{audit.organization}</td>
-                <td>{audit.hours}h</td>
-                <td>{audit.date}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-function ODDManagementView() {
-  return (
-    <div>
-      <h2 className={styles.sectionTitle}>ODD (SDG) Management</h2>
-      <p className={styles.subtitle}>
-        Read-only view of the 17 Sustainable Development Goals
-      </p>
-
-      <div className={styles.tableContainer}>
-        <table>
-          <thead>
-            <tr>
-              <th>ODD #</th>
-              <th>Title</th>
-              <th>Description</th>
-              <th>Missions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {odds.map((odd) => (
-              <tr key={odd.id}>
-                <td>
-                  <strong>ODD {odd.number}</strong>
-                </td>
-                <td>{odd.title}</td>
-                <td>Sustainable Development Goal {odd.number}</td>
-                <td>{odd.missions}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-// Main App Component
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [volunteers, setVolunteers] = useState([]);
+  const [organizations, setOrganizations] = useState([]);
+  const [allPlatformUsers, setAllPlatformUsers] = useState([]);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  const getTitle = () => {
-    const titles = {
-      dashboard: 'Platform Overview',
-      'skill-validation': 'Skill Validation Center',
-      'skills-management': 'Skills Management',
-      volunteers: 'Volunteers Management',
-      organizations: 'Organizations Management',
-      missions: 'Missions Oversight',
-      'hours-audit': 'Volunteering Hours Audit',
-      odds: 'ODD Management',
-    };
-    return titles[activeTab] || 'Admin Dashboard';
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [v, o, p, u] = await Promise.all([
+        adminAPI.getVolunteers().catch(e => { console.error("Admin: Volunteer list fetch failed", e); return []; }),
+        adminAPI.getOrganizations().catch(e => { console.error("Admin: Organization list fetch failed", e); return []; }),
+        adminAPI.getPendingSkills().catch(e => { console.error("Admin: Pending count fetch failed", e); return []; }),
+        adminAPI.getPlatformUsers().catch(e => { console.error("Admin: Platform users fetch failed", e); return []; })
+      ]);
+
+      setVolunteers(Array.isArray(v) ? v : []);
+      setOrganizations(Array.isArray(o) ? o : []);
+      setPendingCount(Array.isArray(p) ? p.length : 0);
+      setAllPlatformUsers(Array.isArray(u) ? u : []);
+
+      console.log("ADMIN: Data synced successfully.");
+    } catch (e) {
+      console.error("ADMIN: Critical sync error", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchData(); }, []);
+
+  const handleDelete = async (userId, name) => {
+    if (!window.confirm(`WARNING: Are you sure you want to permanently delete the account of "${name}"?`)) return;
+    try {
+      await adminAPI.deleteUser(userId);
+      alert("Account deleted successfully.");
+      fetchData();
+    } catch (e) { alert("Deletion failed: " + e.message); }
   };
 
   const renderContent = () => {
+    if (loading) return (
+      <div style={{ padding: "100px", textAlign: "center" }}>
+        <div style={{ fontSize: "1.2rem", color: "#347362", fontWeight: "bold" }}>Syncing admin console...</div>
+        <p style={{ opacity: 0.5, marginTop: "10px" }}>Fetching real-time data from server.</p>
+      </div>
+    );
+
     switch (activeTab) {
       case 'dashboard':
-        return <DashboardView />;
-      case 'skill-validation':
-        return <SkillValidationView />;
-      case 'skills-management':
-        return <SkillsManagementView />;
-      case 'volunteers':
-        return <VolunteersView />;
-      case 'organizations':
-        return <OrganizationsView />;
-      case 'missions':
-        return <MissionsView />;
-      case 'hours-audit':
-        return <HoursAuditView />;
-      case 'odds':
-        return <ODDManagementView />;
-      default:
-        return <DashboardView />;
+        // BULLETPROOF MERGE: Ensure every single account is visible once.
+        const userMap = new Map();
+
+        // 1. Start with global user shell data (lowest priority details)
+        allPlatformUsers.forEach(u => {
+          userMap.set(u.id, {
+            ...u,
+            type: u.role,
+            displayName: (u.firstName || u.email || 'Mystery User'),
+            email: u.email,
+            joinedAt: u.createdAt,
+            userId: u.id,
+            isPartial: true
+          });
+        });
+
+        // 2. Overlay with volunteer details (medium priority)
+        volunteers.forEach(v => {
+          const uId = v.userId || v.user?.id || v.id;
+          if (uId) {
+            userMap.set(uId, {
+              ...userMap.get(uId),
+              ...v,
+              type: 'VOLUNTEER',
+              displayName: v.firstName ? `${v.firstName} ${v.lastName || ''}`.trim() : userMap.get(uId)?.displayName,
+              email: v.user?.email || userMap.get(uId)?.email,
+              joinedAt: v.user?.createdAt || userMap.get(uId)?.joinedAt,
+              userId: uId,
+              isPartial: false
+            });
+          }
+        });
+
+        // 3. Overlay with organization details (high priority)
+        organizations.forEach(o => {
+          const uId = o.userId || o.user?.id || o.id;
+          if (uId) {
+            userMap.set(uId, {
+              ...userMap.get(uId),
+              ...o,
+              type: 'ORGANIZATION',
+              displayName: o.name || userMap.get(uId)?.displayName,
+              email: o.user?.email || userMap.get(uId)?.email,
+              joinedAt: o.user?.createdAt || userMap.get(uId)?.joinedAt,
+              userId: uId,
+              isPartial: false
+            });
+          }
+        });
+
+        const unifiedList = Array.from(userMap.values());
+        const combinedVolunteers = unifiedList.filter(u => u.type === 'VOLUNTEER');
+        const combinedOrgs = unifiedList.filter(u => u.type === 'ORGANIZATION');
+
+        console.log(`ADMIN_MERGE: Total Unified Users: ${unifiedList.length} (V:${combinedVolunteers.length}, O:${combinedOrgs.length})`);
+
+        return (
+          <DashboardView
+            stats={{ volunteers: combinedVolunteers.length, organizations: combinedOrgs.length, pendingSkills: pendingCount }}
+            volunteers={combinedVolunteers}
+            organizations={combinedOrgs}
+            onDelete={handleDelete}
+          />
+        );
+      case 'skill-validation': return <SkillValidationView />;
+      default: return null;
     }
   };
 
@@ -898,7 +351,10 @@ export default function AdminDashboard() {
     <div className={styles.adminDashboard}>
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
       <div className={styles.mainContent}>
-        <Header title={getTitle()} />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 30px", borderBottom: "1px solid #edf2f7", background: "white" }}>
+          <Header title={activeTab === 'dashboard' ? "Global Network Control" : "Skill Management"} />
+          <button onClick={fetchData} className={styles.btn} style={{ background: "#edf2f7", color: "#2d3748", border: "1px solid #e2e8f0", padding: "8px 16px", borderRadius: "8px", fontWeight: "bold" }}>🔄 Refresh</button>
+        </div>
         <div className={styles.content}>{renderContent()}</div>
       </div>
     </div>

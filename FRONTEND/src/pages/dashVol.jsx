@@ -1,23 +1,20 @@
-'use client';
+'use client'
 
-import React, { useState, useEffect } from "react";
-import ReactDOM from "react-dom/client";
-import styles from '../components/volDashboard.module.css'; // Import CSS Module
-import { volunteersAPI, authAPI, API_BASE_URL } from '../utils/api';
-
-const { useState: useStateAlias } = React;
+import React, { useState, useEffect } from "react"
+import styles from '../components/volDashboard.module.css'
+import { volunteersAPI, authAPI, skillsAPI, sdgsAPI, API_BASE_URL } from '../utils/api'
 
 // Utility Functions
 function calculateTotalHours(participations) {
-  return participations.reduce((sum, p) => sum + p.hoursValidated, 0);
+  return (participations || []).reduce((sum, p) => sum + (p.hoursCompleted || 0), 0)
 }
 
 function formatDate(dateString) {
-  const options = { year: 'numeric', month: 'long', day: 'numeric' };
-  return new Date(dateString).toLocaleDateString('fr-FR', options);
+  if (!dateString) return "N/A"
+  const options = { year: 'numeric', month: 'long', day: 'numeric' }
+  return new Date(dateString).toLocaleDateString('en-US', options)
 }
 
-// Header Component
 function DashboardHeader({ volunteer }) {
   return (
     <div className={styles.dashboardHeader}>
@@ -30,17 +27,16 @@ function DashboardHeader({ volunteer }) {
             onClick={() => window.location.href = "/"}
           />
           <div className={styles.headerTitle}>
-            <h1>Welcome back, {volunteer.firstName}! 👋</h1>
-            <p>Your volunteering control panel</p>
+            <h1>Welcome, {volunteer.firstName}! 👋</h1>
+            <p>Your volunteer dashboard</p>
           </div>
         </div>
         <button className={styles.logoutBtn} onClick={() => { localStorage.clear(); window.location.href = "/"; }}>Logout</button>
       </div>
     </div>
-  );
+  )
 }
 
-// Hours Badge Component
 function HoursBadge({ totalHours }) {
   return (
     <div className={styles.hoursBadge}>
@@ -49,27 +45,41 @@ function HoursBadge({ totalHours }) {
           <div className={styles.hoursBadgeLabel}>Total Volunteering Hours</div>
           <div className={styles.hoursBadgeValue}>{totalHours} hrs</div>
           <div style={{ fontSize: '0.75rem', color: '#718096', marginTop: '0.5rem' }}>
-            Your public engagement badge
+            Your public impact
           </div>
         </div>
         <div className={styles.hoursBadgeIcon}>⏱️</div>
       </div>
     </div>
-  );
+  )
 }
 
-// Profile Card Component
-function ProfileCard({ volunteer }) {
+function ProfileCard({
+  volunteer,
+  skillCatalog,
+  showSkillModal,
+  setShowSkillModal,
+  selectedSkillId,
+  setSelectedSkillId,
+  setCertificateFile,
+  handleAddSkill,
+  isLoadingSkill
+}) {
+  // Split catalog into skills and SDGs based on name prefix
+  const skillsOnly = (skillCatalog || []).filter(s => s.name && !s.name.startsWith('SDG'))
+  const sdgsOnly = (skillCatalog || []).filter(s => s.name && s.name.startsWith('SDG'))
+
   return (
     <div className={`${styles.dashboardCard} ${styles.profileCard}`}>
       <div className={styles.cardHeader}>
         <h2 className={styles.cardTitle}>My Profile</h2>
       </div>
 
-      <div className={styles.profilePhoto} onClick={() => document.getElementById('volunteer-photo-input').click()} style={{ cursor: "pointer", overflow: "hidden" }}>
+      <div className={styles.profilePhoto} onClick={() => document.getElementById('volunteer-photo-input').click()} style={{ cursor: "pointer", overflow: "hidden", position: "relative" }}>
         {volunteer.photo === '👤' ? '👤' : (
           <img src={volunteer.photo} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         )}
+        <div style={{ position: "absolute", bottom: 0, right: 0, background: "#347362", color: "white", padding: "4px", borderRadius: "50%", fontSize: "12px" }}>📸</div>
       </div>
       <input
         type="file"
@@ -77,21 +87,18 @@ function ProfileCard({ volunteer }) {
         style={{ display: "none" }}
         accept="image/*"
         onChange={async (e) => {
-          const file = e.target.files[0];
+          const file = e.target.files[0]
           if (file) {
-            const formData = new FormData();
-            formData.append('photo', file);
+            const formData = new FormData()
+            formData.append('photo', file)
             try {
-              const res = await volunteersAPI.uploadVolunteerProfilePhoto(formData);
+              const res = await volunteersAPI.uploadVolunteerProfilePhoto(formData)
               if (res.photo) {
-                alert("Photo uploaded!");
-                // Trigger navbar refresh
-                window.dispatchEvent(new Event("profileUpdate"));
-                // Small delay before reload to ensure backend sync
-                setTimeout(() => window.location.reload(), 500);
+                alert("Photo updated!")
+                window.location.reload()
               }
             } catch (err) {
-              alert("Upload failed");
+              alert("Upload failed: " + err.message)
             }
           }
         }}
@@ -113,296 +120,319 @@ function ProfileCard({ volunteer }) {
         </div>
         <div className={styles.profileMetaItem}>
           <span className={styles.metaIcon}>🎯</span>
-          <span>{volunteer.interests.join(', ')}</span>
+          <span>{volunteer.interests && volunteer.interests.length > 0 ? volunteer.interests.join(', ') : 'Add your interests'}</span>
         </div>
       </div>
 
       <div className={styles.skillsSection}>
-        <h3>Skills & Certifications</h3>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+          <h3>Skills & SDGs</h3>
+          <button
+            onClick={() => setShowSkillModal(true)}
+            style={{ padding: "6px 12px", fontSize: "0.8rem", background: "#347362", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}
+          >
+            + Add
+          </button>
+        </div>
         <div className={styles.skillsList}>
-          {volunteer.skills.map(skill => (
+          {(volunteer.skills || []).length > 0 ? (volunteer.skills || []).map(skill => (
             <div key={skill.id} className={styles.skillItem}>
               <span className={styles.skillName}>{skill.name}</span>
               <span className={`${styles.skillBadge} ${skill.status === 'verified' ? styles.skillVerified : styles.skillPending}`}>
                 <span className={styles.skillIcon}>{skill.status === 'verified' ? '✓' : '⏳'}</span>
-                {skill.status === 'verified' ? 'Vérifiée' : 'Validation Requise'}
+                {skill.status === 'verified' ? 'Verified' : 'Pending'}
               </span>
             </div>
-          ))}
+          )) : <p style={{ fontSize: "0.85rem", opacity: 0.7 }}>No skills added yet.</p>}
         </div>
       </div>
 
-      <div style={{ marginTop: '1.5rem', padding: '1rem', backgroundColor: '#fef3c7', borderRadius: '6px', fontSize: '0.875rem', color: '#92400e' }}>
-        <strong>⚠️ Attention:</strong> 1 skill requires verification to apply for certain missions.
-      </div>
+      {showSkillModal && (
+        <div
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }}
+          onClick={(e) => e.target === e.currentTarget && setShowSkillModal(false)}
+        >
+          <div style={{ background: "white", padding: "2rem", borderRadius: "10px", width: "100%", maxWidth: "450px", color: "black", boxShadow: "0 10px 25px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ marginBottom: "1.5rem" }}>Add from Catalog</h3>
+
+            <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.9rem", fontWeight: "bold" }}>Select Item</label>
+            <select
+              style={{ width: "100%", padding: "12px", marginBottom: "1.5rem", borderRadius: "6px", border: "1px solid #ccc", background: "#fff", color: "#000", fontSize: "1rem", cursor: "pointer" }}
+              onChange={(e) => {
+                const val = e.target.value;
+                console.log("CATALOG: Selected skill ID ->", val);
+                setSelectedSkillId(val);
+              }}
+              value={selectedSkillId}
+            >
+              <option value="">{skillCatalog.length === 0 ? "Loading catalog..." : "-- Choose from Catalog --"}</option>
+              {skillsOnly.length > 0 && (
+                <optgroup label="Professional Skills">
+                  {skillsOnly.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </optgroup>
+              )}
+              {sdgsOnly.length > 0 && (
+                <optgroup label="Volunteering Areas (SDGs)">
+                  {sdgsOnly.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </optgroup>
+              )}
+              {skillCatalog.length === 0 && <option disabled>No items found in catalog</option>}
+            </select>
+
+            <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.9rem", fontWeight: "bold" }}>Proof / Certificate (Optional)</label>
+            <input
+              type="file"
+              style={{ marginBottom: "1.5rem", width: "100%", padding: "8px", border: "1px dashed #ccc", borderRadius: "4px" }}
+              onChange={(e) => setCertificateFile(e.target.files[0])}
+            />
+
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <button
+                onClick={() => setShowSkillModal(false)}
+                style={{ padding: "10px 20px", borderRadius: "6px", border: "1px solid #ccc", background: "#f8f9fa", cursor: "pointer" }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddSkill}
+                disabled={isLoadingSkill || !selectedSkillId}
+                style={{ padding: "10px 20px", borderRadius: "6px", background: "#347362", color: "white", border: "none", cursor: "pointer", fontWeight: "bold", opacity: (isLoadingSkill || !selectedSkillId) ? 0.6 : 1 }}
+              >
+                {isLoadingSkill ? "Processing..." : "Add to Profile"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  );
+  )
 }
 
-// Applications Component
 function ApplicationsCard({ applications }) {
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState('all')
 
   const filteredApplications = filter === 'all'
-    ? applications
-    : applications.filter(app => app.status === filter);
+    ? (applications || [])
+    : (applications || []).filter(app => app.status === filter)
 
   return (
     <div className={`${styles.dashboardCard} ${styles.applicationsCard}`}>
       <div className={styles.cardHeader}>
         <div>
           <h2 className={styles.cardTitle}>My Applications</h2>
-          <p className={styles.cardSubtitle}>Suivi de vos candidatures</p>
+          <p className={styles.cardSubtitle}>Tracking your impact</p>
         </div>
       </div>
 
       <div className={styles.tabNavigation}>
-        <button
-          className={`${styles.tabBtn} ${filter === 'all' ? styles.active : ''}`}
-          onClick={() => setFilter('all')}
-        >
-          All ({applications.length})
-        </button>
-        <button
-          className={`${styles.tabBtn} ${filter === 'pending' ? styles.active : ''}`}
-          onClick={() => setFilter('pending')}
-        >
-          Pending ({applications.filter(a => a.status === 'pending').length})
-        </button>
-        <button
-          className={`${styles.tabBtn} ${filter === 'accepted' ? styles.active : ''}`}
-          onClick={() => setFilter('accepted')}
-        >
-          Accepted ({applications.filter(a => a.status === 'accepted').length})
-        </button>
+        <button className={`${styles.tabBtn} ${filter === 'all' ? styles.activeTab : ''}`} onClick={() => setFilter('all')}>All</button>
+        <button className={`${styles.tabBtn} ${filter === 'PENDING' ? styles.activeTab : ''}`} onClick={() => setFilter('PENDING')}>Pending</button>
+        <button className={`${styles.tabBtn} ${filter === 'APPROVED' ? styles.activeTab : ''}`} onClick={() => setFilter('APPROVED')}>Approved</button>
+        <button className={`${styles.tabBtn} ${filter === 'REJECTED' ? styles.activeTab : ''}`} onClick={() => setFilter('REJECTED')}>Rejected</button>
       </div>
 
-      {filteredApplications.length === 0 ? (
-        <div className={styles.emptyState}>
-          <div className={styles.emptyStateIcon}>📋</div>
-          <div className={styles.emptyStateText}>No applications in this category</div>
-        </div>
-      ) : (
-        <div className={styles.applicationsList}>
-          {filteredApplications.map(app => (
-            <div key={app.id} className={styles.applicationItem}>
-              <div className={styles.appHeader}>
-                <span className={styles.appMissionTitle}>{app.missionTitle}</span>
-                <span className={`${styles.statusBadge} ${styles[`status${app.status.charAt(0).toUpperCase() + app.status.slice(1)}`]}`}>
-                  {app.status === 'pending' && '⏳ En attente'}
-                  {app.status === 'accepted' && '✓ Acceptée'}
-                  {app.status === 'rejected' && '✗ Refusée'}
-                </span>
-              </div>
-
-              <div className={styles.appDetails}>
-                <div className={styles.appDetailItem}>
-                  <span className={styles.detailLabel}>📌 Organization</span>
-                  <span className={styles.detailValue}>{app.organizationName}</span>
-                </div>
-                <div className={styles.appDetailItem}>
-                  <span className={styles.detailLabel}>📅 Date</span>
-                  <span className={styles.detailValue}>{formatDate(app.date)}</span>
-                </div>
-              </div>
-
-              <div className={styles.remainingSpots}>
-                📍 Location: {app.location} | 👥 Remaining spots: {app.remainingSpots}
-              </div>
+      <div className={styles.applicationsList}>
+        {filteredApplications.length > 0 ? filteredApplications.map(app => (
+          <div key={app.id} className={styles.appItem}>
+            <div className={styles.appInfo}>
+              <h4 className={styles.appMission}>{app.mission.title}</h4>
+              <p className={styles.appOrg}>{app.mission.organization.name}</p>
             </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Participations Component
-function ParticipationsCard({ participations }) {
-  const totalHours = calculateTotalHours(participations);
-
-  return (
-    <div className={`${styles.dashboardCard} ${styles.participationsCard}`}>
-      <div className={styles.cardHeader}>
-        <div>
-          <h2 className={styles.cardTitle}>Participation History</h2>
-          <p className={styles.cardSubtitle}>Vos missions complétées</p>
-        </div>
-        <div style={{ textAlign: 'right' }}>
-          <div className={styles.hoursLabel}>Total Hours This Section</div>
-          <div style={{ fontSize: '1.875rem', fontWeight: '700', color: '#ff9a56' }}>
-            {totalHours} hrs
+            <span className={`${styles.statusBadge} ${styles[app.status.toLowerCase()]}`}>
+              {app.status === 'PENDING' ? '⌛ Pending' : app.status === 'APPROVED' ? '✅ Accepted' : app.status === 'REJECTED' ? '❌ Rejected' : app.status}
+            </span>
           </div>
-        </div>
+        )) : <p style={{ textAlign: "center", padding: "20px", opacity: 0.6 }}>No applications found.</p>}
       </div>
-
-      {participations.length === 0 ? (
-        <div className={styles.emptyState}>
-          <div className={styles.emptyStateIcon}>🎯</div>
-          <div className={styles.emptyStateText}>No participations yet. Apply for missions to get started!</div>
-        </div>
-      ) : (
-        <div className={styles.participationsList}>
-          {participations.map(p => (
-            <div key={p.id} className={styles.participationItem}>
-              <div className={styles.participationInfo}>
-                <div className={styles.participationTitle}>{p.missionTitle}</div>
-                <div className={styles.participationDetails}>
-                  <div className={styles.participationDetail}>
-                    <strong>🏢</strong> {p.organizationName}
-                  </div>
-                  <div className={styles.participationDetail}>
-                    <strong>📅</strong> {formatDate(p.date)}
-                  </div>
-                  <div className={styles.participationDetail}>
-                    <strong>📊</strong> {p.status === 'completed' ? '✓ Completed' : '⏳ Waiting Validation'}
-                  </div>
-                </div>
-              </div>
-
-              <div className={styles.participationStatus}>
-                <div style={{ textAlign: 'center' }}>
-                  <div className={styles.hoursDisplay}>{p.hoursValidated}</div>
-                  <div className={styles.hoursLabel}>hours</div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
-  );
+  )
 }
 
-// Main Dashboard Component
+function HistoryCard({ participations }) {
+  return (
+    <div className={`${styles.dashboardCard} ${styles.historyCard}`}>
+      <div className={styles.cardHeader}>
+        <h2 className={styles.cardTitle}>Mission History</h2>
+      </div>
+
+      <div className={styles.historyList}>
+        {(participations || []).length > 0 ? participations.map(p => (
+          <div key={p.id} className={styles.historyItem}>
+            <div className={styles.historyMain}>
+              <div className={styles.historyDate}>{formatDate(p.validatedAt)}</div>
+              <h4 className={styles.historyTitle}>{p.mission.title}</h4>
+              <p className={styles.historyOrg}>{p.mission.organization.name}</p>
+            </div>
+            <div className={styles.historyHours}>+{p.hoursCompleted} hrs</div>
+          </div>
+        )) : <p style={{ textAlign: "center", padding: "20px", opacity: 0.6 }}>No mission badges yet.</p>}
+      </div>
+    </div>
+  )
+}
+
 export default function Dashboard() {
-  const [volunteer, setVolunteer] = useState(null);
-  const [applications, setApplications] = useState([]);
-  const [participations, setParticipations] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [volunteer, setVolunteer] = useState(null)
+  const [applications, setApplications] = useState([])
+  const [participations, setParticipations] = useState([])
+  const [totalHours, setTotalHours] = useState(0)
+  const [loading, setLoading] = useState(true)
+
+  const [skillCatalog, setSkillCatalog] = useState([])
+  const [showSkillModal, setShowSkillModal] = useState(false)
+  const [selectedSkillId, setSelectedSkillId] = useState("")
+  const [certificateFile, setCertificateFile] = useState(null)
+  const [isLoadingSkill, setIsLoadingSkill] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [profileResult, appsResult, partsResult] = await Promise.allSettled([
-          authAPI.getProfile(),
-          volunteersAPI.getMyApplications(),
-          volunteersAPI.getMyParticipations()
-        ]);
+        console.log("DASHBOARD: Starting data fetch...")
+        const profileData = await authAPI.getProfile().catch(e => {
+          console.error("DASHBOARD: Profile API error", e)
+          return null
+        })
 
-        const profileRes = profileResult.status === 'fulfilled' ? profileResult.value : { error: "Failed to load profile" };
-        const appsRes = appsResult.status === 'fulfilled' ? appsResult.value : [];
-        const partsRes = partsResult.status === 'fulfilled' ? partsResult.value : [];
+        if (!profileData) {
+          console.warn("DASHBOARD: No profile returned")
+          throw new Error("Unable to sync profile")
+        }
 
-        if (profileRes.error) console.warn("Profile error:", profileRes.error);
+        if (profileData.role !== "VOLUNTEER") {
+          window.location.href = profileData.role === "ORGANIZATION" ? "/orgdashboard" : "/"
+          return
+        }
 
-        // Fallbacks if data is missing or errored
-        const safeProfile = profileRes.error ? {
-          id: 0, firstName: "Volunteer", lastName: "", bio: "", interests: [], availabilities: "", skills: []
-        } : profileRes;
+        console.log("DASHBOARD: Loading secondary resources...")
+        const [apps, parts, catalogResponse] = await Promise.all([
+          volunteersAPI.getMyApplications().catch(() => []),
+          volunteersAPI.getMyParticipations().catch(() => []),
+          skillsAPI.getAllSkills().catch(() => [])
+        ])
 
-        const safeApps = Array.isArray(appsRes) ? appsRes : [];
-        const safeParts = Array.isArray(partsRes) ? partsRes : [];
+        const finalCatalog = (catalogResponse && catalogResponse.length > 0)
+          ? catalogResponse
+          : [
+            { id: 'cmksch2s00000u7dgetowjdlf', name: 'First Aid & Emergency Response' },
+            { id: 'cmksch2s00001u7dgpwmrh573', name: 'Event Coordination' },
+            { id: 'cmksch2s00003u7dgjuovir48', name: 'Web Development (React/Fullstack)' },
+            { id: 'cmksch2s00004u7dghu5ea425', name: 'Language Translation' },
+            { id: 'cmksch2s0000cu7dgziww06ac', name: 'SDG 3: Good Health' },
+            { id: 'cmksch2s0000gu7dgrrgfgk7x', name: 'SDG 13: Climate Action' }
+          ];
 
-        setVolunteer(transformProfile(safeProfile));
-        setApplications(transformApplications(safeApps));
-        setParticipations(transformParticipations(safeParts));
-      } catch (err) {
-        console.error("Dashboard fetch error:", err);
-        setError("Failed to load dashboard data. Please try logging in again.");
+        setVolunteer(transformProfile(profileData))
+        setApplications(apps)
+        setParticipations(parts)
+        setTotalHours(calculateTotalHours(parts))
+        setSkillCatalog(finalCatalog)
+      } catch (error) {
+        console.error("DASHBOARD: Critical failure", error)
+        setVolunteer(null)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
-    fetchData();
-  }, []);
+    fetchData()
+  }, [])
 
   const transformProfile = (data) => {
-    let photoUrl = '👤';
-    const rawPhoto = data.volunteer?.photo;
-
-    if (rawPhoto) {
-      photoUrl = rawPhoto.startsWith('http') ? rawPhoto : `${API_BASE_URL}${rawPhoto}`;
+    if (!data) return null
+    let photoUrl = '👤'
+    if (data.volunteer?.photo) {
+      photoUrl = data.volunteer.photo.startsWith('http') ? data.volunteer.photo : `${API_BASE_URL}${data.volunteer.photo}`
     }
 
     return {
-      id: data.id,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      description: data.bio || 'No description provided.',
-      interests: data.interests || [],
-      location: 'Alger, Algérie', // Assuming default, or get from user
-      availability: data.availabilities || 'Not specified',
+      id: data.volunteer?.id || 'new-user',
+      firstName: data.firstName || 'Volunteer',
+      lastName: data.lastName || '',
+      description: data.volunteer?.bio || 'Your story starts here! Introduce yourself...',
+      interests: data.volunteer?.interests || [],
+      location: 'Algiers, Algeria',
+      availability: data.volunteer?.availabilities || 'Not specified',
       photo: photoUrl,
       skills: (data.volunteer?.skills || []).map(s => ({
         id: s.id,
         name: s.skill?.name || "Skill",
         status: s.status === 'VERIFIED' ? 'verified' : 'pending'
       }))
-    };
-  };
+    }
+  }
 
-  const transformApplications = (data) => {
-    return data.map(app => ({
-      id: app.id,
-      missionTitle: app.mission.title,
-      organizationName: app.mission.organization.name,
-      date: app.appliedAt.split('T')[0], // Format date
-      location: app.mission.location,
-      status: app.status === "APPROVED" ? "accepted" : app.status.toLowerCase(),
-      requiredSkills: [], // Could fetch mission skills if needed
-      remainingSpots: app.mission.volunteersNeeded - app.mission.volunteersAccepted
-    }));
-  };
+  const handleAddSkill = async () => {
+    if (!selectedSkillId) return alert("Please select an item.")
+    setIsLoadingSkill(true)
 
-  const transformParticipations = (data) => {
-    return data.map(part => ({
-      id: part.id,
-      missionTitle: part.mission.title,
-      organizationName: part.mission.organization.name,
-      date: part.validatedAt.split('T')[0],
-      hoursValidated: part.hoursCompleted,
-      status: 'completed' // Assuming all participations are completed
-    }));
-  };
+    const formData = new FormData()
+    formData.append("skillId", selectedSkillId)
+    if (certificateFile) formData.append("certificate", certificateFile)
 
-  if (error) return (
-    <div style={{ padding: "50px", textAlign: "center" }}>
-      <h2>Access Error</h2>
-      <p>{error}</p>
-      <button
-        onClick={() => { localStorage.clear(); window.location.href = "/login"; }}
-        style={{ marginTop: "20px", padding: "10px 20px", cursor: "pointer", background: "#347362", color: "white", border: "none" }}
-      >
-        Go to Login
-      </button>
+    try {
+      const res = await volunteersAPI.addSkillWithCertificate(formData)
+      alert("Skill added successfully!")
+      setShowSkillModal(false)
+      window.location.reload()
+    } catch (e) {
+      console.error("DASHBOARD: Skill addition failed!", e);
+      alert(`Submission Error: ${e.message}`)
+    } finally {
+      setIsLoadingSkill(false)
+    }
+  }
+
+  if (loading) return (
+    <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div className={styles.loading}>Syncing your universe...</div>
     </div>
-  );
-  if (!volunteer || volunteer.id === 0) return (
-    <div style={{ padding: "50px", textAlign: "center" }}>
-      <h2>Loading Profile...</h2>
-      <p>If this takes too long, please try re-logging in.</p>
-    </div>
-  );
+  )
 
-  const totalHours = calculateTotalHours(participations);
-
-  return (
-    <div>
-      <DashboardHeader volunteer={volunteer} />
-
-      <div className={styles.dashboardContainer}>
-        <HoursBadge totalHours={totalHours} />
-
-        <div className={styles.dashboardGrid}>
-          <ProfileCard volunteer={volunteer} />
-          <ApplicationsCard applications={applications} />
-        </div>
-
-        <ParticipationsCard participations={participations} />
+  if (!volunteer) return (
+    <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "20px" }}>
+      <div>
+        <h2 style={{ color: "#c53030" }}>Restricted Access</h2>
+        <p style={{ margin: "1rem 0", opacity: 0.8 }}>We couldn't load your volunteer data.</p>
+        <button onClick={() => window.location.href = "/login"} style={{ padding: "12px 24px", background: "#347362", color: "white", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "bold" }}>Retry Login</button>
       </div>
     </div>
-  );
+  )
+
+  return (
+    <div className={styles.dashboardContainer}>
+      <DashboardHeader volunteer={volunteer} />
+      <main className={styles.dashboardContent}>
+        <div className={styles.topStatsRow}>
+          <div style={{ flex: "1" }}><HoursBadge totalHours={totalHours} /></div>
+          <div style={{ flex: "1" }}>
+            <div className={styles.hoursBadge} style={{ background: "linear-gradient(135deg, #1A365D 0%, #2A4365 100%)" }}>
+              <div className={styles.hoursBadgeContent}>
+                <div className={styles.hoursBadgeText}>
+                  <div className={styles.hoursBadgeLabel} style={{ color: "rgba(255,255,255,0.8)" }}>Missions Accomplished</div>
+                  <div className={styles.hoursBadgeValue} style={{ color: "white" }}>{participations.length}</div>
+                </div>
+                <div className={styles.hoursBadgeIcon}>🌟</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.dashboardGrid}>
+          <div className={styles.gridLeftCol}>
+            <ProfileCard
+              volunteer={volunteer} skillCatalog={skillCatalog}
+              showSkillModal={showSkillModal} setShowSkillModal={setShowSkillModal}
+              selectedSkillId={selectedSkillId} setSelectedSkillId={setSelectedSkillId}
+              setCertificateFile={setCertificateFile} handleAddSkill={handleAddSkill}
+              isLoadingSkill={isLoadingSkill}
+            />
+          </div>
+          <div className={styles.gridRightCol}>
+            <ApplicationsCard applications={applications} />
+            <HistoryCard participations={participations} />
+          </div>
+        </div>
+      </main>
+    </div>
+  )
 }

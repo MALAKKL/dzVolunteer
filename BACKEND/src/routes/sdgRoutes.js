@@ -1,7 +1,12 @@
 const express = require("express");
 const router = express.Router();
-const { importSDGs, getMissionsBySDG } = require("../controllers/sdgController");
+const { importSDGs, getMissionsBySDG, getAllSDGs } = require("../controllers/sdgController");
 const { authenticate, authorize } = require("../middleware/authMiddleware");
+
+// ========================
+// Public Route: Get All SDGs
+// ========================
+router.get("/", getAllSDGs);
 
 // ========================
 // Admin-only route to import SDGs from XML

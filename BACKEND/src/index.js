@@ -10,12 +10,51 @@ const cors = require("cors");
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
+// Ensure virtual admin has a record in database
+async function initAdmin() {
+  try {
+    const adminEmail = process.env.ADMIN_EMAIL || "admin@dzvolunteer.com";
+    const adminExists = await prisma.user.findFirst({
+      where: { OR: [{ id: "admin" }, { email: adminEmail }] }
+    });
+
+    if (!adminExists) {
+      console.log("🛠️ Initializing system admin record...");
+      await prisma.user.create({
+        data: {
+          id: "admin",
+          email: adminEmail,
+          role: "ADMIN",
+          firstName: "System",
+          lastName: "Admin"
+        }
+      });
+    } else if (adminExists.id !== "admin") {
+      // If it exists but has a different ID (auto-generated), update it to "admin" 
+      // to match our virtual user ID logic if we want consistency, 
+      // but it's safer to just log it.
+      console.log(`🛠️ Admin record exists with email ${adminEmail} (ID: ${adminExists.id})`);
+    } else {
+      console.log("🛠️ System admin record is ready.");
+    }
+  } catch (e) {
+    console.error("Admin initialization failed:", e.message);
+  }
+}
+initAdmin();
+
 // Initialize app BEFORE using routes
 const app = express();
 
 // Middleware
 app.use(express.json());
 app.use(cors());
+
+// Internal Logger
+app.use((req, res, next) => {
+  console.log(`[${new Date().toLocaleTimeString()}] ${req.method} ${req.url}`);
+  next();
+});
 
 const passport = require("passport");
 require("./config/passport");
@@ -33,9 +72,16 @@ const sdgRoutes = require("./routes/sdgRoutes");
 const missionRoutes = require('./routes/missionRoutes');
 const applicationRoutes = require("./routes/applicationRoutes");
 const volunteerRoutes = require("./routes/volunteerRoutes");
+const skillRoutes = require("./routes/skillRoutes");
 
 // Public mission routes (Includes search)
 app.use("/api/missions", missionRoutesPublic);
+
+// Volunteer-only actions (profile, skills)
+app.use("/api/volunteers", volunteerRoutes);
+
+// Skill catalog
+app.use("/api/skills", skillRoutes);
 
 // Organization-only mission routes
 app.use("/api/organization/missions", missionRoutesOrg);
@@ -52,9 +98,6 @@ app.use("/api/admin", adminRoutes);
 // Public SDGs
 app.use("/api/sdgs", sdgRoutes);
 
-// Volunteer routes (profile management, top volunteers, photo)
-app.use("/api/volunteers", volunteerRoutes);
-
 // Application routes (Apply, My Applications)
 app.use("/api/applications", applicationRoutes);
 
@@ -64,11 +107,32 @@ app.use('/api/volunteer/missions', missionRoutes);
 
 app.use("/uploads", express.static("uploads"));
 
-// Test route
 app.get("/", (req, res) => {
   res.send("Backend is running!");
 });
 
-// Start server
+// JSON 404 Handler (Keep this after all routes)
+app.use((req, res) => {
+  const msg = `404 - ${req.method} ${req.originalUrl} not found. Registered routes: /api/missions, /api/volunteers, /api/skills, etc.`;
+  console.warn(`[404] ${req.method} ${req.originalUrl}`);
+  res.status(404).json({
+    error: "Resource not found",
+    message: msg,
+    tip: "Make sure you are calling the correct URL and that the route is registered."
+  });
+});
+
+// Global Error Handler
+app.use((err, req, res, next) => {
+  console.error("GLOBAL ERROR:", err);
+  res.status(err.status || 500).json({
+    error: err.message || "Internal Server Error",
+    path: req.originalUrl
+  });
+});
+
+// Final Server Config
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});

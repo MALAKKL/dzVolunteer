@@ -7,10 +7,10 @@ const { getMissionApplicants, updateApplicationStatus } = require("../controller
 // All routes require authentication + ORGANIZATION role
 router.use(authenticate, authorize("ORGANIZATION"));
 
-const uploadMissionPhoto = require("../middleware/missionUploadMiddleware");
+const upload = require("../middleware/uploadMiddleware");
 
 // Create a mission
-router.post("/", uploadMissionPhoto.single("image"), createMission);
+router.post("/", upload.single("image"), createMission);
 
 // Update a mission
 router.put("/:id", updateMission);

@@ -37,6 +37,10 @@ async function applyToMission(req, res) {
 // get all applications of logged-in volunteer
 async function getMyApplications(req, res) {
   try {
+    if (!req.user || !req.user.volunteer) {
+      console.warn(`getMyApplications: No volunteer profile found for user ${req.user?.id}`);
+      return res.json([]);
+    }
     const volunteerId = req.user.volunteer.id;
     const applications = await prisma.application.findMany({
       where: { volunteerId },
@@ -49,7 +53,7 @@ async function getMyApplications(req, res) {
     });
     res.json(applications);
   } catch (err) {
-    console.error(err);
+    console.error("getMyApplications Error:", err);
     res.status(500).json({ message: 'Erreur serveur' });
   }
 }
@@ -57,6 +61,10 @@ async function getMyApplications(req, res) {
 // get participations (approved/completed applications)
 async function getMyParticipations(req, res) {
   try {
+    if (!req.user || !req.user.volunteer) {
+      console.warn(`getMyParticipations: No volunteer profile found for user ${req.user?.id}`);
+      return res.json([]);
+    }
     const volunteerId = req.user.volunteer.id;
     const participations = await prisma.participation.findMany({
       where: { volunteerId },
@@ -69,7 +77,7 @@ async function getMyParticipations(req, res) {
     });
     res.json(participations);
   } catch (err) {
-    console.error(err);
+    console.error("getMyParticipations Error:", err);
     res.status(500).json({ message: 'Erreur serveur' });
   }
 }

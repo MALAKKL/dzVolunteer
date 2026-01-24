@@ -249,9 +249,8 @@ export default function Home() {
                   onError={(e) => e.target.src = "/green.jpg"}
                 />
                 <h3>{org.fieldOfActivity || "Organization"}</h3>
-                <p><strong>{org.name}</strong></p>
-                <p>{org.description ? (org.description.substring(0, 100) + "...") : "No description available."}</p>
-                <button className="mission-btn" onClick={() => Navigate(`/organization/${org.id}`)}>See more</button>
+                <p style={{ fontWeight: "bold", fontSize: "1.1rem" }}>{org.name}</p>
+                <p style={{ fontSize: "0.9rem", color: "#666" }}>{org.description ? (org.description.substring(0, 100) + "...") : "No description available."}</p>
               </div>
             ))}
           </div>

@@ -1,44 +1,64 @@
-const multer = require("multer");
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const multer = require('multer');
 const path = require("path");
-
 const fs = require('fs');
 
-// Storage configuration
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    let folder = "uploads/organizations";
+// 1. Check if Cloudinary is configured
+const isCloudinaryConfigured =
+  process.env.CLOUDINARY_CLOUD_NAME &&
+  process.env.CLOUDINARY_API_KEY &&
+  process.env.CLOUDINARY_API_SECRET;
 
-    // Check role or path to determine folder
-    if (req.user?.role === "VOLUNTEER" || req.originalUrl.includes("volunteer")) {
-      folder = "uploads/volunteers";
-    }
+let storage;
 
-    // Ensure directory exists
-    if (!fs.existsSync(folder)) {
-      fs.mkdirSync(folder, { recursive: true });
-    }
+if (isCloudinaryConfigured) {
+  // Cloudinary Storage
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
 
-    cb(null, folder);
-  },
-  filename: (req, file, cb) => {
-    const uniqueName = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueName + path.extname(file.originalname));
-  },
-});
+  storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+      folder: 'dzVolunteer',
+      allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
+    },
+  });
+  console.log("☁️  Cloudinary storage selected");
+} else {
+  // Local Disk Storage (Fallback)
+  storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      let folder = "uploads/organizations";
+      if (req.user?.role === "VOLUNTEER" || req.originalUrl.includes("volunteer")) {
+        if (req.originalUrl.includes("skill")) {
+          folder = "uploads/certificates";
+        } else {
+          folder = "uploads/volunteers";
+        }
+      } else if (req.originalUrl.includes("mission")) {
+        folder = "uploads/missions";
+      }
 
-// File filter (images only)
-const fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith("image/")) {
-    cb(null, true);
-  } else {
-    cb(new Error("Only image files allowed"), false);
-  }
-};
+      if (!fs.existsSync("uploads")) fs.mkdirSync("uploads");
+      if (!fs.existsSync(folder)) fs.mkdirSync(folder, { recursive: true });
 
-const uploadOrgPhoto = multer({
+      cb(null, folder);
+    },
+    filename: (req, file, cb) => {
+      const uniqueName = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      cb(null, uniqueName + path.extname(file.originalname));
+    },
+  });
+  console.log("💾 Local disk storage selected");
+}
+
+const upload = multer({
   storage,
-  fileFilter,
-  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
 });
 
-module.exports = uploadOrgPhoto;
+module.exports = upload;
