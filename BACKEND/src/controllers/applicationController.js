@@ -1,0 +1,85 @@
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
+// volunteer applies to mission (auth required)
+async function applyToMission(req, res) {
+  try {
+    if (!req.user.volunteer) {
+      return res.status(403).json({ message: "Only volunteers can apply for missions" });
+    }
+    const volunteerId = req.user.volunteer.id;
+    const missionId = req.params.missionId;
+
+    // check mission exists & published
+    const mission = await prisma.mission.findUnique({ where: { id: missionId } });
+    if (!mission || !mission.isPublished || mission.isArchived) {
+      return res.status(400).json({ message: 'Mission non disponible' });
+    }
+
+
+    const existing = await prisma.application.findUnique({
+      where: { missionId_volunteerId: { missionId, volunteerId } }
+    }).catch(() => null);
+
+    if (existing) return res.status(400).json({ message: 'Vous avez déjà postulé' });
+
+    const application = await prisma.application.create({
+      data: { missionId, volunteerId }
+    });
+    res.status(201).json(application);
+  } catch (err) {
+    // if unique constraint violation arrive, handle
+    if (err.code === 'P2002') return res.status(400).json({ message: 'Vous avez déjà postulé' });
+    console.error(err);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+}
+
+// get all applications of logged-in volunteer
+async function getMyApplications(req, res) {
+  try {
+    if (!req.user || !req.user.volunteer) {
+      console.warn(`getMyApplications: No volunteer profile found for user ${req.user?.id}`);
+      return res.json([]);
+    }
+    const volunteerId = req.user.volunteer.id;
+    const applications = await prisma.application.findMany({
+      where: { volunteerId },
+      include: {
+        mission: {
+          include: { organization: true }
+        }
+      },
+      orderBy: { appliedAt: 'desc' }
+    });
+    res.json(applications);
+  } catch (err) {
+    console.error("getMyApplications Error:", err);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+}
+
+// get participations (approved/completed applications)
+async function getMyParticipations(req, res) {
+  try {
+    if (!req.user || !req.user.volunteer) {
+      console.warn(`getMyParticipations: No volunteer profile found for user ${req.user?.id}`);
+      return res.json([]);
+    }
+    const volunteerId = req.user.volunteer.id;
+    const participations = await prisma.participation.findMany({
+      where: { volunteerId },
+      include: {
+        mission: {
+          include: { organization: true }
+        }
+      },
+      orderBy: { validatedAt: 'desc' }
+    });
+    res.json(participations);
+  } catch (err) {
+    console.error("getMyParticipations Error:", err);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+}
+
+module.exports = { applyToMission, getMyApplications, getMyParticipations };
