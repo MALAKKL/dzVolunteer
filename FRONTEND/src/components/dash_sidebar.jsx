@@ -6,7 +6,7 @@ import {
   FiClipboard,
   FiUsers,
   FiBell,
-  
+
 } from "react-icons/fi";
 
 export default function Sidebar({ currentPage, onNavigate }) {
@@ -20,7 +20,7 @@ export default function Sidebar({ currentPage, onNavigate }) {
   return (
     <aside className={styles.sidebar}>
       {/* Header */}
-      <div className={styles["sidebar-header"]}>
+      <div className={styles["sidebar-header"]} style={{ cursor: "pointer" }} onClick={() => window.location.href = "/"}>
         <img
           src="/logo2.svg"
           alt="Logo"
@@ -37,9 +37,8 @@ export default function Sidebar({ currentPage, onNavigate }) {
             return (
               <button
                 key={item.id}
-                className={`${styles["nav-item"]} ${
-                  currentPage === item.id ? styles.active : ""
-                }`}
+                className={`${styles["nav-item"]} ${currentPage === item.id ? styles.active : ""
+                  }`}
                 onClick={() => onNavigate(item.id)}
               >
                 <Icon className={styles["nav-icon"]} size={18} />

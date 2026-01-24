@@ -35,13 +35,13 @@ const applicationRoutes = require("./routes/applicationRoutes");
 
 
 
-// Public mission routes
-app.use("/api/missions", missionRoutesPublic);//for public
+// Public mission routes (Includes search)
+app.use("/api/missions", missionRoutesPublic);
 
 // Organization-only mission routes
-app.use("/api/organization/missions", missionRoutesOrg);//only orrg
+app.use("/api/organization/missions", missionRoutesOrg);
 
-// Organization routes (view/update)
+// Organization routes (view/update profile)
 app.use("/api/organizations", organizationRoutes);
 
 // Auth routes
@@ -50,15 +50,14 @@ app.use("/api/auth", authRoutes);
 // Admin routes
 app.use("/api/admin", adminRoutes);
 
-// Admin-only import
-// Public missions by SDG
+// Public SDGs
 app.use("/api/sdgs", sdgRoutes);
 
-//voolunt mission
-app.use('/api/missions', missionRoutes);
-
-// application routes
+// Application routes (Apply, My Applications)
 app.use("/api/applications", applicationRoutes);
+
+// Private volunteer mission actions (like archiving)
+app.use('/api/volunteer/missions', missionRoutes);
 
 
 app.use("/uploads", express.static("uploads"));

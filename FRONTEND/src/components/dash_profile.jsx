@@ -93,6 +93,8 @@ export default function Profile() {
         if (response.photo) {
           setFormData(prev => ({ ...prev, image: `${API_BASE_URL}${response.photo}` }))
           alert("Image uploaded successfully!");
+          // Trigger navbar refresh
+          window.dispatchEvent(new Event("profileUpdate"));
         }
       } catch (err) {
         console.error("Upload failed", err);

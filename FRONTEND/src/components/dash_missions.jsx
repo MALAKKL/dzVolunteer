@@ -31,13 +31,11 @@ export default function Missions() {
 
         const orgDetails = await organizationsAPI.getOrganizationById(profile.organization.id);
         if (orgDetails.missions) {
-          // Separate current and archived
-          // Check if 'isArchived' or date logic applies
           const current = [];
+          const archived = [];
           orgDetails.missions.forEach(mission => {
             const endDate = new Date(mission.endDate);
             const now = new Date();
-            // A mission is archived if isArchived=true OR it has expired (endDate < now)
             const isExpired = endDate < now;
 
             if (mission.isArchived || isExpired) {
@@ -46,8 +44,8 @@ export default function Missions() {
               current.push(mission);
             }
           });
-          setCurrentMissions(current);
-          setArchivedMissions(archived);
+          setCurrentMissions([...current]);
+          setArchivedMissions([...archived]);
         }
       }
     } catch (error) {

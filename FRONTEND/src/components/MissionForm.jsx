@@ -11,8 +11,8 @@ export default function MissionForm() {
   const [formData, setFormData] = useState({
     missionName: "",
     description: "",
-    startDate: "2020-01-15",
-    endDate: "2020-01-15",
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Default 1 week span
     location: "",
     volunteersNeeded: "",
     competencies: "",

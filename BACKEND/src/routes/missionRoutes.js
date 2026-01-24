@@ -6,6 +6,5 @@ const router = express.Router();
 router.use(authenticate);
 
 router.put("/archive/:id", archiveMission);
-router.get("/search", searchMissions);
 
 module.exports = router;

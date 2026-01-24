@@ -41,6 +41,7 @@ exports.createMission = async (req, res) => {
         endDate: new Date(endDate),
         volunteersNeeded: volunteersNeeded ? parseInt(volunteersNeeded) : 0,
         sdgId: sdg ? sdg.id : null,
+        isPublished: true, // Explicitly set to true
         image: image, // Add image path
         ...(skills && { // Handle skills if provided (complex parsing if multipart)
           skills: {
@@ -72,13 +73,14 @@ exports.getAllMissions = async (req, res) => {
       include: {
         skills: { include: { skill: true } },
         sdg: true,
-        organization: { select: { name: true, email: true } }
-      }
+        organization: { select: { name: true, logo: true, location: true } }
+      },
+      orderBy: { createdAt: 'desc' }
     });
 
     res.json(missions);
   } catch (error) {
-    console.error(error);
+    console.error("Error in getAllMissions:", error);
     res.status(500).json({ message: "Error loading missions" });
   }
 };
@@ -199,9 +201,21 @@ exports.updateApplicationStatus = async (req, res) => {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
-    const updated = await prisma.application.update({
-      where: { id: applicationId },
-      data: { status }
+    const updated = await prisma.$transaction(async (tx) => {
+      const app = await tx.application.update({
+        where: { id: applicationId },
+        data: { status }
+      });
+
+      // If approved, increment mission's volunteersAccepted
+      if (status === "APPROVED") {
+        await tx.mission.update({
+          where: { id: app.missionId },
+          data: { volunteersAccepted: { increment: 1 } }
+        });
+      }
+
+      return app;
     });
 
     res.json({ message: `Application ${status}`, updated });
@@ -230,7 +244,6 @@ exports.searchMissions = async (req, res) => {
   try {
     const { q, city } = req.query;
     const where = {
-      isPublished: true,
       isArchived: false,
       AND: []
     };

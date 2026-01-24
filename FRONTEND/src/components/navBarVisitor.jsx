@@ -4,6 +4,7 @@ import { SiX } from "react-icons/si";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FiGrid } from "react-icons/fi"; // Simple dashboard icon
 import { useEffect, useState } from "react";
+import { authAPI, API_BASE_URL } from "../utils/api";
 
 export default function NavbarVisitor({ sections, activeSection, handleNavClick }) {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ export default function NavbarVisitor({ sections, activeSection, handleNavClick 
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState(null);
+  const [profilePic, setProfilePic] = useState("/origo.png");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -19,8 +21,28 @@ export default function NavbarVisitor({ sections, activeSection, handleNavClick 
     if (token) {
       setIsAuthenticated(true);
       setUserRole(role);
+      fetchProfilePic();
     }
+
+    const handleUpdate = () => fetchProfilePic();
+    window.addEventListener("profileUpdate", handleUpdate);
+    return () => window.removeEventListener("profileUpdate", handleUpdate);
   }, []);
+
+  const fetchProfilePic = async () => {
+    try {
+      const profile = await authAPI.getProfile();
+      if (profile.organization?.logo) {
+        setProfilePic(`${API_BASE_URL}${profile.organization.logo}`);
+      } else if (profile.volunteer?.photo) {
+        setProfilePic(`${API_BASE_URL}${profile.volunteer.photo}`);
+      } else {
+        setProfilePic(profile.role === "ORGANIZATION" ? "/origo.png" : "/vol1.png");
+      }
+    } catch (err) {
+      console.error("Failed to fetch profile pic in navbar", err);
+    }
+  };
 
   const handleDashboardClick = () => {
     // Roles are typically "VOLUNTEER" or "ORGANIZATION" (or lowercase)
@@ -92,7 +114,7 @@ export default function NavbarVisitor({ sections, activeSection, handleNavClick 
                 title="Go to Dashboard"
               >
                 <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "#e0e0e0", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", border: "2px solid #347362" }}>
-                  <img src="/origo.png" alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={(e) => { e.target.onerror = null; e.target.src = "/vol1.png" }} />
+                  <img src={profilePic} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={(e) => { e.target.onerror = null; e.target.src = userRole === "ORGANIZATION" ? "/origo.png" : "/vol1.png" }} />
                 </div>
               </button>
               <button

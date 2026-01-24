@@ -26,7 +26,6 @@ const authenticate = async (req, res, next) => {
         organization: {
           include: {
             missions: {
-              where: { isPublished: true, isArchived: false },
               orderBy: { startDate: "asc" }
             }
           }

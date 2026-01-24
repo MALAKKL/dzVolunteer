@@ -3,6 +3,9 @@ const prisma = new PrismaClient();
 // volunteer applies to mission (auth required)
 async function applyToMission(req, res) {
   try {
+    if (!req.user.volunteer) {
+      return res.status(403).json({ message: "Only volunteers can apply for missions" });
+    }
     const volunteerId = req.user.volunteer.id;
     const missionId = req.params.missionId;
 

@@ -53,7 +53,6 @@ exports.getOrganizationById = async (req, res, next) => {
       where: { id },
       include: {
         missions: {
-          where: { isPublished: true, isArchived: false },
           orderBy: { startDate: "asc" },
         },
       },

@@ -67,6 +67,9 @@ export default function VolunteerMissionPage() {
   if (error) return <div style={{ padding: "50px", textAlign: "center" }}>{error}</div>;
   if (!mission) return <div style={{ padding: "50px", textAlign: "center" }}>Mission not found</div>;
 
+  const role = localStorage.getItem("role");
+  const isVolunteer = role === "VOLUNTEER";
+
   return (
     <div
       style={{
@@ -77,8 +80,7 @@ export default function VolunteerMissionPage() {
         padding: "20px",
       }}
     >
-      <MissionCard mission={mission} showApplyButton={true} onApply={handleApply} />
-
+      <MissionCard mission={mission} showApplyButton={isVolunteer} onApply={handleApply} />
     </div>
   );
 }

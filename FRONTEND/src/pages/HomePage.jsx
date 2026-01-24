@@ -70,10 +70,9 @@ export default function Home() {
         setMissionsLoading(true)
         const data = await missionsAPI.getAllMissions();
 
-        // Take 3 random missions
+        // Take 3 latest missions
         if (data && Array.isArray(data)) {
-          const shuffled = [...data].sort(() => 0.5 - Math.random());
-          setMissions(shuffled.slice(0, 3));
+          setMissions(data.slice(0, 3));
         }
         setMissionsError(null)
       } catch (error) {

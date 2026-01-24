@@ -22,11 +22,19 @@ function DashboardHeader({ volunteer }) {
   return (
     <div className={styles.dashboardHeader}>
       <div className={styles.headerContent}>
-        <div className={styles.headerTitle}>
-          <h1>Welcome back, {volunteer.firstName}! 👋</h1>
-          <p>Your volunteering control panel</p>
+        <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+          <img
+            src="/logo1.svg"
+            alt="Logo"
+            style={{ height: "50px", cursor: "pointer" }}
+            onClick={() => window.location.href = "/"}
+          />
+          <div className={styles.headerTitle}>
+            <h1>Welcome back, {volunteer.firstName}! 👋</h1>
+            <p>Your volunteering control panel</p>
+          </div>
         </div>
-        <button className={styles.logoutBtn}>Logout</button>
+        <button className={styles.logoutBtn} onClick={() => { localStorage.clear(); window.location.href = "/"; }}>Logout</button>
       </div>
     </div>
   );
@@ -307,7 +315,7 @@ export default function Dashboard() {
       organizationName: app.mission.organization.name,
       date: app.appliedAt.split('T')[0], // Format date
       location: app.mission.location,
-      status: app.status.toLowerCase(),
+      status: app.status === "APPROVED" ? "accepted" : app.status.toLowerCase(),
       requiredSkills: [], // Could fetch mission skills if needed
       remainingSpots: app.mission.volunteersNeeded - app.mission.volunteersAccepted
     }));
