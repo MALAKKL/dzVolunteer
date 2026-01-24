@@ -78,7 +78,9 @@ export default function SignupForm() {
         localStorage.setItem("token", response.token)
         localStorage.setItem("role", response.user?.role || (accountType === "volunteer" ? "VOLUNTEER" : "ORGANIZATION"))
         alert("Account created successfully!")
-        window.location.href = accountType === "volunteer" ? "/voldashboard" : "/orgdashboard"
+        setTimeout(() => {
+          window.location.href = accountType === "volunteer" ? "/voldashboard" : "/orgdashboard"
+        }, 100)
       } else {
         setErrors({ form: response.message || "Registration failed" })
       }
