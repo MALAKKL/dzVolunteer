@@ -12,6 +12,7 @@ exports.createMission = async (req, res) => {
 
     const organizationId = req.user.organization.id; // from auth middleware
     const { title, description, location, startDate, endDate, volunteersNeeded, skills, sdgId } = req.body;
+    const image = req.file ? `/uploads/missions/${req.file.filename}` : null;
 
     // Validate required fields
     if (!title || !description || !location || !startDate || !endDate) {
@@ -38,9 +39,10 @@ exports.createMission = async (req, res) => {
         location,
         startDate: new Date(startDate),
         endDate: new Date(endDate),
-        volunteersNeeded: volunteersNeeded || 0,
+        volunteersNeeded: volunteersNeeded ? parseInt(volunteersNeeded) : 0,
         sdgId: sdg ? sdg.id : null,
-        ...(skills && skills.length > 0 && {
+        image: image, // Add image path
+        ...(skills && { // Handle skills if provided (complex parsing if multipart)
           skills: {
             create: skills.map(s => ({
               skillId: s.skillId,
@@ -213,7 +215,7 @@ exports.updateApplicationStatus = async (req, res) => {
 
 //volunteer side 
 
-exports.archiveMission =async (req, res) => {
+exports.archiveMission = async (req, res) => {
   try {
     const id = req.params.id;
     const mission = await prisma.mission.update({ where: { id }, data: { isArchived: true } });
@@ -224,7 +226,7 @@ exports.archiveMission =async (req, res) => {
 }
 
 // search: q (keyword), city
-exports.searchMissions =async (req, res) => {
+exports.searchMissions = async (req, res) => {
   try {
     const { q, city } = req.query;
     const where = {

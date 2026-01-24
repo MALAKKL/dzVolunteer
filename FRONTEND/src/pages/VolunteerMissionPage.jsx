@@ -1,30 +1,71 @@
-import { useParams } from "react-router-dom";
+"use client"
+import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import MissionCard from "../components/MissionCard";
-
-const missions = [
-  {
-    id: 1,
-    title: "Planting 1 Million Trees",
-    organization: "Aldjazayer khedra",
-    date: "05/12/2025 - 15/12/2025",
-    description: "An environmental mission focused on planting trees.",
-    number: "15",
-    location: "Tala Athmane, Tizi Ouzou",
-    image: "/mp2.png",
-    competencies: ["Physical Fitness", "Environmental Awareness"],
-  },
-];
+import { missionsAPI, API_BASE_URL } from "../utils/api";
 
 export default function VolunteerMissionPage() {
   const { id } = useParams();
-  const mission = missions.find((m) => m.id === parseInt(id));
+  const navigate = useNavigate();
+  const [mission, setMission] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const handleApply = () => {
-    alert("Application submitted!");
-    // later → API call
+  useEffect(() => {
+    const fetchMission = async () => {
+      try {
+        setLoading(true);
+        const data = await missionsAPI.getMissionById(id);
+
+        // Transform API data to match MissionCard expectations
+        // MissionCard expects: { title, organization, date, description, number, location, image, competencies }
+        const transformedMission = {
+          id: data.id,
+          title: data.title,
+          organization: data.organization ? data.organization.name : "Unknown",
+          date: `${new Date(data.startDate).toLocaleDateString()} - ${new Date(data.endDate).toLocaleDateString()}`,
+          description: data.description,
+          number: data.volunteersNeeded.toString(),
+          location: data.location,
+          image: data.image ? `${API_BASE_URL}${data.image}` : "/mp2.png",
+          competencies: data.skills && data.skills.length > 0 ? data.skills.map(s => s.skill.name) : ["General"],
+        };
+
+        setMission(transformedMission);
+      } catch (err) {
+        console.error("Failed to load mission", err);
+        setError("Mission not found or failed to load");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) fetchMission();
+  }, [id]);
+
+  const handleApply = async () => {
+    // Check if user is logged in
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Authentication required. Please login to apply.");
+      navigate("/login");
+      return;
+    }
+
+    try {
+      await missionsAPI.applyToMission(id, "I am interested in this mission.");
+      alert("ur demmand will be treated");
+      // Optionally redirect to dashboard
+      navigate("/voldashboard");
+    } catch (error) {
+      console.error("Apply failed", error);
+      alert("Failed to apply. You might have already applied.");
+    }
   };
 
-  if (!mission) return <p>Mission not found</p>;
+  if (loading) return <div style={{ padding: "50px", textAlign: "center" }}>Loading...</div>;
+  if (error) return <div style={{ padding: "50px", textAlign: "center" }}>{error}</div>;
+  if (!mission) return <div style={{ padding: "50px", textAlign: "center" }}>Mission not found</div>;
 
   return (
     <div

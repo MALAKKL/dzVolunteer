@@ -1,14 +1,16 @@
 const express = require("express");
 const router = express.Router();
 const { createMission, updateMission, deleteMission } = require("../controllers/missionController");
-const { authenticate, authorize} = require("../middleware/authMiddleware");
+const { authenticate, authorize } = require("../middleware/authMiddleware");
 const { getMissionApplicants, updateApplicationStatus } = require("../controllers/missionController");
 
 // All routes require authentication + ORGANIZATION role
 router.use(authenticate, authorize("ORGANIZATION"));
 
+const uploadMissionPhoto = require("../middleware/missionUploadMiddleware");
+
 // Create a mission
-router.post("/", createMission);
+router.post("/", uploadMissionPhoto.single("image"), createMission);
 
 // Update a mission
 router.put("/:id", updateMission);

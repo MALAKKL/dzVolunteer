@@ -21,11 +21,20 @@ const authenticate = async (req, res, next) => {
         id: true,
         email: true,
         role: true,
+        firstName: true,
+        lastName: true,
         organization: {
-          select: { id: true, name: true },
+          include: {
+            missions: {
+              where: { isPublished: true, isArchived: false },
+              orderBy: { startDate: "asc" }
+            }
+          }
         },
         volunteer: {
-          select: { id: true, firstName: true, lastName: true },
+          include: {
+            skills: { include: { skill: true } }
+          }
         },
       },
     });

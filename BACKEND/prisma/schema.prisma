@@ -52,18 +52,23 @@ model User {
 
 // Organization Profile
 model Organization {
-  id          String   @id @default(cuid())
-  userId      String  @unique
-  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name        String
-  description String?  @db.Text
-  mission     String?  @db.Text
-  history     String?  @db.Text
-  contact     String?
-  website     String?
-  logoUrl     String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now()) @updatedAt
+  id              String   @id @default(cuid())
+  userId          String  @unique
+  user            User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name            String
+  description     String?  @db.Text
+  mission         String?  @db.Text
+  history         String?  @db.Text
+  contact         String?
+  website         String?
+  logoUrl         String?
+  logo            String?   // New field for relative path
+  location        String?
+  fieldOfActivity String?
+  dateOfCreation  DateTime?
+  competencies    String[]  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
 
   missions Mission[]
 
@@ -81,6 +86,7 @@ model Volunteer {
   interests             String[] @db.Text
   availabilities        String?  @db.Text
   totalHoursVolunteered Int      @default(0)
+  photo                 String?
   createdAt             DateTime @default(now())
   updatedAt             DateTime @default(now()) @updatedAt
 
@@ -148,8 +154,9 @@ model Mission {
   endDate            DateTime     @default(now())
   volunteersNeeded   Int          @default(0)
   volunteersAccepted Int          @default(0)
-  isPublished        Boolean      @default(false)
+  isPublished        Boolean      @default(true)
   isArchived         Boolean      @default(false)
+  image              String?
   sdgId              Int?
   sdg                SDG?         @relation(fields: [sdgId], references: [id])
   createdAt          DateTime     @default(now())

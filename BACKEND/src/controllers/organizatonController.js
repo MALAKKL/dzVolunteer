@@ -10,11 +10,11 @@ exports.getAllOrganizations = async (req, res, next) => {
 
     const where = search
       ? {
-          OR: [
-            { name: { contains: search, mode: "insensitive" } },
-            { description: { contains: search, mode: "insensitive" } },
-          ],
-        }
+        OR: [
+          { name: { contains: search, mode: "insensitive" } },
+          { description: { contains: search, mode: "insensitive" } },
+        ],
+      }
       : {};
 
     const organizations = await prisma.organization.findMany({
@@ -87,6 +87,10 @@ exports.updateOrganization = async (req, res, next) => {
         ...(contact !== undefined && { contact }),
         ...(website !== undefined && { website }),
         ...(logoUrl !== undefined && { logoUrl }),
+        ...(req.body.location !== undefined && { location: req.body.location }),
+        ...(req.body.fieldOfActivity !== undefined && { fieldOfActivity: req.body.fieldOfActivity }),
+        ...(req.body.dateOfCreation && { dateOfCreation: new Date(req.body.dateOfCreation) }),
+        ...(req.body.competencies && { competencies: req.body.competencies })
       },
     });
 

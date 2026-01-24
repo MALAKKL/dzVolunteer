@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { FaEnvelope, FaLock } from "react-icons/fa"
+import { useNavigate } from "react-router-dom"
 import styles from "../styles/signUp.module.css"
 import { authAPI } from "../utils/api"
 
@@ -10,6 +11,7 @@ export default function LoginForm({ accountType, setAccountType, userInfo, setUs
   const [password, setPassword] = useState("")
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
 
   const validateForm = () => {
     const newErrors = {}
@@ -38,12 +40,17 @@ export default function LoginForm({ accountType, setAccountType, userInfo, setUs
       if (response.token) {
         // Get user profile
         const profileResponse = await authAPI.getProfile()
+        if (profileResponse.role) {
+          localStorage.setItem("role", profileResponse.role)
+        }
+
         setUserInfo({
           accountType,
           email,
           ...profileResponse,
         })
         alert(`Welcome back! You've been logged in.`)
+        navigate("/")
       } else {
         setErrors({ form: response.message || "Login failed" })
       }
@@ -71,9 +78,8 @@ export default function LoginForm({ accountType, setAccountType, userInfo, setUs
         {/* Account Type Tabs */}
         <div className={styles["tabs-container"]}>
           <button
-            className={`${styles["tab-button"]} ${
-              accountType === "volunteer" ? styles.active : styles.inactive
-            }`}
+            className={`${styles["tab-button"]} ${accountType === "volunteer" ? styles.active : styles.inactive
+              }`}
             onClick={() => {
               setAccountType("volunteer")
               setUserInfo(null)
@@ -83,9 +89,8 @@ export default function LoginForm({ accountType, setAccountType, userInfo, setUs
             Volunteer
           </button>
           <button
-            className={`${styles["tab-button"]} ${
-              accountType === "organization" ? styles.active : styles.inactive
-            }`}
+            className={`${styles["tab-button"]} ${accountType === "organization" ? styles.active : styles.inactive
+              }`}
             onClick={() => {
               setAccountType("organization")
               setUserInfo(null)

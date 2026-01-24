@@ -1,38 +1,73 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSearchParams, useNavigate } from "react-router-dom"
 import styles from "../components/MissionForm.module.css";
+import { missionsAPI } from "../utils/api";
 
 export default function EditMissionForm() {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const missionId = searchParams.get('id');
+
   const [formData, setFormData] = useState({
     missionName: "",
     description: "",
-    startDate: "2020-01-15",
-    endDate: "2020-01-15",
+    startDate: "",
+    endDate: "",
     location: "",
     volunteersNeeded: "",
     competencies: "",
     image: null,
   })
 
-
+  const [loading, setLoading] = useState(false);
 
   const competencyOptions = [
-    "Environmental Science","Project Management","Teaching","Medical Skills",
-    "Communication","Marketing","Fundraising","Event Planning","Leadership",
-    "Technical Skills","Social Work","Research","Design","Photography",
+    "Environmental Science", "Project Management", "Teaching", "Medical Skills",
+    "Communication", "Marketing", "Fundraising", "Event Planning", "Leadership",
+    "Technical Skills", "Social Work", "Research", "Design", "Photography",
   ]
 
-const [selectedCompetencies, setSelectedCompetencies] = useState(formData.competencies)
-  const toggleCompetency = (c) => {
-    setSelectedCompetencies(prev =>
-      prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c]
-    )
+  const [selectedCompetencies, setSelectedCompetencies] = useState([])
+
+  useEffect(() => {
+    if (missionId) {
+      fetchMission();
+    }
+  }, [missionId]);
+
+  const fetchMission = async () => {
+    try {
+      setLoading(true);
+      const data = await missionsAPI.getMissionById(missionId);
+      setFormData({
+        missionName: data.title,
+        description: data.description,
+        startDate: data.startDate.split('T')[0],
+        endDate: data.endDate.split('T')[0],
+        location: data.location,
+        volunteersNeeded: data.volunteersNeeded.toString(),
+        competencies: "", // Handled by selectedCompetencies
+        image: null
+      });
+      if (data.skills) {
+        setSelectedCompetencies(data.skills.map(s => s.skill.name));
+      }
+    } catch (error) {
+      console.error("Failed to load mission", error);
+      alert("Failed to load mission details");
+    } finally {
+      setLoading(false);
+    }
   }
 
-
-
-
+  const toggleCompetency = (c) => {
+    // Read-only for now if update logic isn't complex enough to handle skill diffing
+    // setSelectedCompetencies(prev =>
+    //   prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c]
+    // )
+  }
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -43,33 +78,57 @@ const [selectedCompetencies, setSelectedCompetencies] = useState(formData.compet
   }
 
   const handleImageUpload = (e) => {
-    const file = e.target.files[0]
-    if (file) {
-      setFormData((prev) => ({
-        ...prev,
-        image: file,
-      }))
+    // const file = e.target.files[0]
+    // if (file) {
+    //   setFormData((prev) => ({
+    //     ...prev,
+    //     image: file,
+    //   }))
+    // }
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!missionId) return;
+
+    try {
+      setLoading(true);
+      const updateData = {
+        title: formData.missionName,
+        description: formData.description,
+        location: formData.location, // Check if supported
+        volunteersNeeded: parseInt(formData.volunteersNeeded),
+        // startDate: new Date(formData.startDate).toISOString(), 
+        // endDate: new Date(formData.endDate).toISOString(), 
+        // isPublished: true
+      };
+
+      await missionsAPI.updateMission(missionId, updateData);
+      alert("Mission updated successfully!");
+      navigate("/orgdashboard"); // Navigate back
+    } catch (error) {
+      console.error("Update failed", error);
+      alert("Failed to update mission");
+    } finally {
+      setLoading(false);
     }
   }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    console.log("Form submitted:", formData)
+  const handleCancel = () => {
+    navigate("/orgdashboard");
   }
 
-  const handleCancel = () => {
-    console.log("Form cancelled")
-  }
+  if (loading && !formData.missionName) return <div>Loading mission detail...</div>;
 
   return (
     <div className={styles.formContainer}>
       <div className={styles.formHeader}>
-        <h2>Edit Mission informations</h2> 
+        <h2>Edit Mission informations</h2>
         <p className={styles.subtitle}>
-         Edit your volunteering mission details below.
+          Edit your volunteering mission details below.
         </p>
       </div>
-    
+
       <form onSubmit={handleSubmit}>
         {/* Mission Image Upload */}
         <div className={styles.formGroup}>
@@ -80,22 +139,10 @@ const [selectedCompetencies, setSelectedCompetencies] = useState(formData.compet
               id="image-upload"
               className={styles.fileInput}
               accept="image/*"
-              onChange={handleImageUpload}
+              disabled
             />
             <label htmlFor="image-upload" className={styles.uploadLabel}>
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="17 8 12 3 7 8" />
-                <line x1="12" y1="3" x2="12" y2="15" />
-              </svg>
-              <span>Click to upload image</span>
+              <span>(Image update not supported)</span>
             </label>
           </div>
         </div>
@@ -135,7 +182,8 @@ const [selectedCompetencies, setSelectedCompetencies] = useState(formData.compet
               name="startDate"
               className={styles.dateInput}
               value={formData.startDate}
-              onChange={handleInputChange}
+              readOnly
+              style={{ backgroundColor: "#f0f0f0" }}
             />
           </div>
 
@@ -146,7 +194,8 @@ const [selectedCompetencies, setSelectedCompetencies] = useState(formData.compet
               name="endDate"
               className={styles.dateInput}
               value={formData.endDate}
-              onChange={handleInputChange}
+              readOnly
+              style={{ backgroundColor: "#f0f0f0" }}
             />
           </div>
         </div>
@@ -179,42 +228,29 @@ const [selectedCompetencies, setSelectedCompetencies] = useState(formData.compet
 
         {/* Competencies Required */}
         <div className={styles.formGroup}>
-
-
-
-          <label>Competencies Required</label>
+          <label>Competencies Required (View Only)</label>
           <div className={styles["competencies-grid"]}>
-                      {competencyOptions.map(c => (
-                        <label
-                          key={c}
-                          className={`${styles["competency-checkbox"]} ${
-                            selectedCompetencies.includes(c) ? styles.selected : ""
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selectedCompetencies.includes(c)}
-                            onChange={() => toggleCompetency(c)}
-                          />
-                          <span className={styles["checkbox-label"]}>{c}</span>
-                        </label>
-                      ))}
-                    </div>
-          {/* <label>Competencies Required</label>
-          <textarea
-            name="competencies"
-            className={styles.textareaInput}
-            placeholder="Enter required competencies"
-            value={formData.competencies}
-            onChange={handleInputChange}
-            rows="3"
-          /> */}
+            {competencyOptions.map(c => (
+              <label
+                key={c}
+                className={`${styles["competency-checkbox"]} ${selectedCompetencies.includes(c) ? styles.selected : ""
+                  }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedCompetencies.includes(c)}
+                  readOnly
+                />
+                <span className={styles["checkbox-label"]}>{c}</span>
+              </label>
+            ))}
+          </div>
         </div>
 
         {/* Buttons */}
         <div className={styles.buttonGroup}>
-          <button type="submit" className={styles.btnCreate}>
-            edit
+          <button type="submit" className={styles.btnCreate} disabled={loading}>
+            {loading ? "Saving..." : "Edit"}
           </button>
           <button
             type="button"

@@ -5,9 +5,9 @@ import { useNavigate } from "react-router-dom"
 import { FaUser, FaBuilding, FaEnvelope, FaLock } from "react-icons/fa"
 import { GoogleLogin } from "@react-oauth/google"
 
-import "../App.css" // global styles (OK)
-import styles from "../styles/signUp.module.css" 
-import { authAPI } from "../utils/api" 
+import "../App.css"
+import styles from "../styles/signUp.module.css"
+import { authAPI } from "../utils/api"
 
 export default function SignupForm() {
   const navigate = useNavigate()
@@ -97,9 +97,17 @@ export default function SignupForm() {
       if (response.token) {
         localStorage.setItem("token", response.token)
         localStorage.setItem("user", JSON.stringify(response.user))
-        alert(`Account created successfully as ${accountType}!`)
-        // Redirect to dashboard or home
-        navigate(accountType === "volunteer" ? "/dashVolunteer" : "/dashOrgan")
+        // Helper to infer role if backend doesn't return it in response (it should, but just in case)
+        const role = accountType === "volunteer" ? "VOLUNTEER" : "ORGANIZATION"
+        if (response.user && response.user.role) {
+          localStorage.setItem("role", response.user.role)
+        } else {
+          localStorage.setItem("role", role)
+        }
+
+        alert(`Welcome to dz volunteer!`)
+        // Redirect to homepage
+        navigate("/")
       } else {
         alert("Registration failed: " + (response.message || response.error || "Unknown error"))
       }
@@ -122,9 +130,12 @@ export default function SignupForm() {
       if (response.token) {
         localStorage.setItem("token", response.token)
         localStorage.setItem("user", JSON.stringify(response.user))
-        alert("Google signup successful!")
+        alert("Google signup successful! Welcome to dz volunteer")
+        if (response.user && response.user.role) {
+          localStorage.setItem("role", response.user.role)
+        }
         // Redirect to dashboard or home
-        navigate(accountType === "volunteer" ? "/dashVolunteer" : "/dashOrgan")
+        navigate("/")
       } else {
         alert("Google signup failed: " + (response.message || "Unknown error"))
       }
@@ -137,180 +148,178 @@ export default function SignupForm() {
   }
 
   return (
-   <div className={styles["form-section"]}>
-  <div className={styles["form-container"]}>
-    {/* header */}
-    <div className={styles["form-header"]}>
-      <h2>Create Account</h2>
-      <p>One Step Away from Something Great!</p>
-    </div>
-
-    {/* google signup button */}
-    <div className={styles["google-button-wrapper"]}>
-      <GoogleLogin
-        onSuccess={handleGoogleSignup}
-        onError={() => alert("Google login failed")}
-        theme="outline"
-        size="large"
-        width="100%"
-      />
-    </div>
-
-    {/* account type Tabs */}
-    <div className={styles["tabs-container"]}>
-      <button
-        onClick={() => setAccountType("volunteer")}
-        className={`${styles["tab-button"]} ${
-          accountType === "volunteer"
-            ? styles.active
-            : styles.inactive
-        }`}
-      >
-        Volunteer
-      </button>
-
-      <button
-        onClick={() => setAccountType("organization")}
-        className={`${styles["tab-button"]} ${
-          accountType === "organization"
-            ? styles.active
-            : styles.inactive
-        }`}
-      >
-        Organization
-      </button>
-    </div>
-
-    {/* form */}
-    <form onSubmit={handleSubmit}>
-      {accountType === "volunteer" && (
-        <div className={styles["form-row"]}>
-          <div className={styles["form-group"]}>
-            <div className={styles["input-wrapper"]}>
-              <FaUser className={styles["input-icon"]} />
-              <input
-                type="text"
-                name="firstName"
-                placeholder="first name"
-                value={formData.firstName}
-                onChange={handleInputChange}
-                className={styles["form-input"]}
-              />
-            </div>
-            {errors.firstName && (
-              <p className={styles["error-message"]}>
-                {errors.firstName}
-              </p>
-            )}
-          </div>
-
-          <div className={styles["form-group"]}>
-            <div className={styles["input-wrapper"]}>
-              <FaUser className={styles["input-icon"]} />
-              <input
-                type="text"
-                name="familyName"
-                placeholder="family name"
-                value={formData.familyName}
-                onChange={handleInputChange}
-                className={styles["form-input"]}
-              />
-            </div>
-            {errors.familyName && (
-              <p className={styles["error-message"]}>
-                {errors.familyName}
-              </p>
-            )}
-          </div>
+    <div className={styles["form-section"]}>
+      <div className={styles["form-container"]}>
+        {/* header */}
+        <div className={styles["form-header"]}>
+          <h2>Create Account</h2>
+          <p>One Step Away from Something Great!</p>
         </div>
-      )}
 
-      {accountType === "organization" && (
-        <div className={styles["form-group"]}>
-          <div className={styles["input-wrapper"]}>
-            <FaBuilding className={styles["input-icon"]} />
-            <input
-              type="text"
-              name="organizationName"
-              placeholder="organization name"
-              value={formData.organizationName}
-              onChange={handleInputChange}
-              className={styles["form-input"]}
-            />
-          </div>
-          {errors.organizationName && (
-            <p className={styles["error-message"]}>
-              {errors.organizationName}
-            </p>
+        {/* google signup button */}
+        <div className={styles["google-button-wrapper"]}>
+          <GoogleLogin
+            onSuccess={handleGoogleSignup}
+            onError={() => alert("Google login failed")}
+            theme="outline"
+            size="large"
+            width="100%"
+          />
+        </div>
+
+        {/* account type Tabs */}
+        <div className={styles["tabs-container"]}>
+          <button
+            onClick={() => setAccountType("volunteer")}
+            className={`${styles["tab-button"]} ${accountType === "volunteer"
+              ? styles.active
+              : styles.inactive
+              }`}
+          >
+            Volunteer
+          </button>
+
+          <button
+            onClick={() => setAccountType("organization")}
+            className={`${styles["tab-button"]} ${accountType === "organization"
+              ? styles.active
+              : styles.inactive
+              }`}
+          >
+            Organization
+          </button>
+        </div>
+
+        {/* form */}
+        <form onSubmit={handleSubmit}>
+          {accountType === "volunteer" && (
+            <div className={styles["form-row"]}>
+              <div className={styles["form-group"]}>
+                <div className={styles["input-wrapper"]}>
+                  <FaUser className={styles["input-icon"]} />
+                  <input
+                    type="text"
+                    name="firstName"
+                    placeholder="first name"
+                    value={formData.firstName}
+                    onChange={handleInputChange}
+                    className={styles["form-input"]}
+                  />
+                </div>
+                {errors.firstName && (
+                  <p className={styles["error-message"]}>
+                    {errors.firstName}
+                  </p>
+                )}
+              </div>
+
+              <div className={styles["form-group"]}>
+                <div className={styles["input-wrapper"]}>
+                  <FaUser className={styles["input-icon"]} />
+                  <input
+                    type="text"
+                    name="familyName"
+                    placeholder="family name"
+                    value={formData.familyName}
+                    onChange={handleInputChange}
+                    className={styles["form-input"]}
+                  />
+                </div>
+                {errors.familyName && (
+                  <p className={styles["error-message"]}>
+                    {errors.familyName}
+                  </p>
+                )}
+              </div>
+            </div>
           )}
-        </div>
-      )}
 
-      <div className={styles["form-group"]}>
-        <div className={styles["input-wrapper"]}>
-          <FaEnvelope className={styles["input-icon"]} />
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            value={formData.email}
-            onChange={handleInputChange}
-            className={styles["form-input"]}
-          />
-        </div>
-        {errors.email && (
-          <p className={styles["error-message"]}>
-            {errors.email}
-          </p>
-        )}
+          {accountType === "organization" && (
+            <div className={styles["form-group"]}>
+              <div className={styles["input-wrapper"]}>
+                <FaBuilding className={styles["input-icon"]} />
+                <input
+                  type="text"
+                  name="organizationName"
+                  placeholder="organization name"
+                  value={formData.organizationName}
+                  onChange={handleInputChange}
+                  className={styles["form-input"]}
+                />
+              </div>
+              {errors.organizationName && (
+                <p className={styles["error-message"]}>
+                  {errors.organizationName}
+                </p>
+              )}
+            </div>
+          )}
+
+          <div className={styles["form-group"]}>
+            <div className={styles["input-wrapper"]}>
+              <FaEnvelope className={styles["input-icon"]} />
+              <input
+                type="email"
+                name="email"
+                placeholder="Email"
+                value={formData.email}
+                onChange={handleInputChange}
+                className={styles["form-input"]}
+              />
+            </div>
+            {errors.email && (
+              <p className={styles["error-message"]}>
+                {errors.email}
+              </p>
+            )}
+          </div>
+
+          <div className={styles["form-group"]}>
+            <div className={styles["input-wrapper"]}>
+              <FaLock className={styles["input-icon"]} />
+              <input
+                type="password"
+                name="password"
+                placeholder="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                className={styles["form-input"]}
+              />
+            </div>
+            {errors.password && (
+              <p className={styles["error-message"]}>
+                {errors.password}
+              </p>
+            )}
+          </div>
+
+          <div className={styles["password-requirements"]}>
+            <span>password must be at least 8 characters long</span>
+            <a href="#" className={styles["forgot-link"]}>
+              Forgot password?
+            </a>
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className={styles["submit-button"]}
+          >
+            {isLoading ? "Creating account..." : "Sign up"}
+            <svg
+              className={styles["button-arrow"]}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <line x1="5" y1="12" x2="19" y2="12" />
+              <polyline points="12 5 19 12 12 19" />
+            </svg>
+          </button>
+        </form>
       </div>
-
-      <div className={styles["form-group"]}>
-        <div className={styles["input-wrapper"]}>
-          <FaLock className={styles["input-icon"]} />
-          <input
-            type="password"
-            name="password"
-            placeholder="password"
-            value={formData.password}
-            onChange={handleInputChange}
-            className={styles["form-input"]}
-          />
-        </div>
-        {errors.password && (
-          <p className={styles["error-message"]}>
-            {errors.password}
-          </p>
-        )}
-      </div>
-
-      <div className={styles["password-requirements"]}>
-        <span>password must be at least 8 characters long</span>
-        <a href="#" className={styles["forgot-link"]}>
-          Forgot password?
-        </a>
-      </div>
-
-      <button
-        type="submit"
-        disabled={isLoading}
-        className={styles["submit-button"]}
-      >
-        {isLoading ? "Creating account..." : "Sign up"}
-        <svg
-          className={styles["button-arrow"]}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-        >
-          <line x1="5" y1="12" x2="19" y2="12" />
-          <polyline points="12 5 19 12 12 19" />
-        </svg>
-      </button>
-    </form>
-  </div>
-</div>
+    </div>
 
   )
 }

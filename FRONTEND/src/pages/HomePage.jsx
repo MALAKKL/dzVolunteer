@@ -10,13 +10,14 @@ import { FaMapMarkerAlt, FaEnvelope, FaClock, FaPhone } from "react-icons/fa";
 import { useEffect, useRef, useState } from "react";
 import Counter from "../components/Counter";
 import { useMemo } from "react";
+import { missionsAPI, API_BASE_URL } from "../utils/api";
 
 export default function Home() {
   const [activeSection, setActiveSection] = useState("home")
   const sectionRefs = useRef({})
   const Navigate = useNavigate();
   const location = useLocation();
-  
+
   const [missions, setMissions] = useState([])
   const [missionsLoading, setMissionsLoading] = useState(true)
   const [missionsError, setMissionsError] = useState(null)
@@ -67,14 +68,13 @@ export default function Home() {
     const fetchMissions = async () => {
       try {
         setMissionsLoading(true)
-        const response = await fetch('http://localhost:5000/api/missions')
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
+        const data = await missionsAPI.getAllMissions();
+
+        // Take 3 random missions
+        if (data && Array.isArray(data)) {
+          const shuffled = [...data].sort(() => 0.5 - Math.random());
+          setMissions(shuffled.slice(0, 3));
         }
-        
-        const data = await response.json()
-        setMissions(data)
         setMissionsError(null)
       } catch (error) {
         console.error('Error fetching missions:', error)
@@ -115,7 +115,7 @@ export default function Home() {
   }
 
   const handleMissionClick = (missionId) => {
-    console.log('Mission clicked:', missionId)
+    Navigate(`/volunteer/mission/${missionId}`);
   }
 
   return (
@@ -131,7 +131,7 @@ export default function Home() {
         <section id="home" ref={(el) => (sectionRefs.current["home"] = el)} className="section home-section">
           <div className="home-content">
             <h1>Turn Your Time Into Hope</h1>
-            <p>Find missions, support communities, and help build a better <h3 style={{color:"#EF8451", fontSize:"30px"}}>Algeria</h3> one action at a time.</p>
+            <p>Find missions, support communities, and help build a better <h3 style={{ color: "#EF8451", fontSize: "30px" }}>Algeria</h3> one action at a time.</p>
             <div className="social-icons">
               <a href="https://www.facebook.com/profile.php?id=61586081911948" className="social-icon">
                 <FaFacebookF size={20} />
@@ -143,7 +143,9 @@ export default function Home() {
                 <FaInstagram size={20} />
               </a>
             </div>
-            <button className="join-btn" onClick={() => Navigate("/signup")}>Join us</button>
+            {!localStorage.getItem("token") && (
+              <button className="join-btn" onClick={() => Navigate("/signup")}>Join us</button>
+            )}
           </div>
           <div className="home-image">
             <img src="/vol1.png" alt="Volunteer" />
@@ -196,8 +198,8 @@ export default function Home() {
                 {missions.map((mission) => (
                   <div className="mission-card" key={mission.id}>
                     <div className="mission-image">
-                      <img 
-                        src={mission.image || '/placeholder.jpg'} 
+                      <img
+                        src={mission.image ? (mission.image.startsWith('http') ? mission.image : `${API_BASE_URL}${mission.image}`) : '/placeholder.jpg'}
                         alt={mission.title}
                         onError={(e) => {
                           e.target.src = '/placeholder.jpg'
@@ -207,7 +209,7 @@ export default function Home() {
                     <div className="mission-content">
                       <h3>{mission.title}</h3>
                       <p>{mission.description}</p>
-                      <button 
+                      <button
                         className="mission-btn"
                         onClick={() => handleMissionClick(mission.id)}
                       >
@@ -263,7 +265,7 @@ export default function Home() {
               </div>
             ))}
           </div>
-          
+
           <div className="missions-footer">
             <button className="view-all-btn" onClick={() => Navigate("/organizations")}>
               see all organizations
@@ -309,15 +311,15 @@ export default function Home() {
                 <div className="stat-label">Organizations</div>
               </div>
               <div className="stat">
-                <div className="stat-number">+<Counter target={1450} duration={4000}/></div>
+                <div className="stat-number">+<Counter target={1450} duration={4000} /></div>
                 <div className="stat-label">Volunteers</div>
               </div>
               <div className="stat">
-                <div className="stat-number">+<Counter target={250} duration={4000}/></div>
+                <div className="stat-number">+<Counter target={250} duration={4000} /></div>
                 <div className="stat-label">Missions</div>
               </div>
               <div className="stat">
-                <div className="stat-number">+<Counter target={560} duration={4000}/></div>
+                <div className="stat-number">+<Counter target={560} duration={4000} /></div>
                 <div className="stat-label">Completed</div>
               </div>
             </div>
@@ -349,7 +351,7 @@ export default function Home() {
 
             <div className="contact-details">
               <h3>Contact Details</h3>
-              <p style={{color:"black", marginTop:"20px"}}>If you have any questions at all, we're here to help! Our friendly team is ready to assist you and provide the answers you need. Feel free to contact us anytime.</p> <br/>
+              <p style={{ color: "black", marginTop: "20px" }}>If you have any questions at all, we're here to help! Our friendly team is ready to assist you and provide the answers you need. Feel free to contact us anytime.</p> <br />
               <div className="detail-item">
                 <div className="detail-icon"><FaMapMarkerAlt /></div>
                 <div className="detail-content">

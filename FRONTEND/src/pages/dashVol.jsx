@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import styles from '../components/volDashboard.module.css'; // Import CSS Module
-import { volunteersAPI } from '../utils/api';
+import { volunteersAPI, authAPI, API_BASE_URL } from '../utils/api';
 
 const { useState: useStateAlias } = React;
 
@@ -106,8 +106,8 @@ function ProfileCard({ volunteer }) {
 function ApplicationsCard({ applications }) {
   const [filter, setFilter] = useState('all');
 
-  const filteredApplications = filter === 'all' 
-    ? applications 
+  const filteredApplications = filter === 'all'
+    ? applications
     : applications.filter(app => app.status === filter);
 
   return (
@@ -120,19 +120,19 @@ function ApplicationsCard({ applications }) {
       </div>
 
       <div className={styles.tabNavigation}>
-        <button 
+        <button
           className={`${styles.tabBtn} ${filter === 'all' ? styles.active : ''}`}
           onClick={() => setFilter('all')}
         >
           All ({applications.length})
         </button>
-        <button 
+        <button
           className={`${styles.tabBtn} ${filter === 'pending' ? styles.active : ''}`}
           onClick={() => setFilter('pending')}
         >
           Pending ({applications.filter(a => a.status === 'pending').length})
         </button>
-        <button 
+        <button
           className={`${styles.tabBtn} ${filter === 'accepted' ? styles.active : ''}`}
           onClick={() => setFilter('accepted')}
         >
@@ -248,21 +248,32 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [profileRes, appsRes, partsRes] = await Promise.all([
-          volunteersAPI.getMyProfile(),
+        const [profileResult, appsResult, partsResult] = await Promise.allSettled([
+          authAPI.getProfile(),
           volunteersAPI.getMyApplications(),
           volunteersAPI.getMyParticipations()
         ]);
 
-        if (profileRes.error) throw new Error(profileRes.error);
-        if (appsRes.error) throw new Error(appsRes.error);
-        if (partsRes.error) throw new Error(partsRes.error);
+        const profileRes = profileResult.status === 'fulfilled' ? profileResult.value : { error: "Failed to load profile" };
+        const appsRes = appsResult.status === 'fulfilled' ? appsResult.value : [];
+        const partsRes = partsResult.status === 'fulfilled' ? partsResult.value : [];
 
-        setVolunteer(transformProfile(profileRes));
-        setApplications(transformApplications(appsRes));
-        setParticipations(transformParticipations(partsRes));
+        if (profileRes.error) console.warn("Profile error:", profileRes.error);
+
+        // Fallbacks if data is missing or errored
+        const safeProfile = profileRes.error ? {
+          id: 0, firstName: "Volunteer", lastName: "", bio: "", interests: [], availabilities: "", skills: []
+        } : profileRes;
+
+        const safeApps = Array.isArray(appsRes) ? appsRes : [];
+        const safeParts = Array.isArray(partsRes) ? partsRes : [];
+
+        setVolunteer(transformProfile(safeProfile));
+        setApplications(transformApplications(safeApps));
+        setParticipations(transformParticipations(safeParts));
       } catch (err) {
-        setError(err.message);
+        console.error("Dashboard fetch error:", err);
+        setError("Failed to load dashboard data. Please try logging in again.");
       } finally {
         setLoading(false);
       }
@@ -280,10 +291,10 @@ export default function Dashboard() {
       interests: data.interests || [],
       location: 'Alger, Algérie', // Assuming default, or get from user
       availability: data.availabilities || 'Not specified',
-      photo: '👤',
-      skills: data.skills.map(s => ({
+      photo: data.volunteer?.photo ? `${API_BASE_URL}${data.volunteer.photo}` : '👤',
+      skills: (data.volunteer?.skills || []).map(s => ({
         id: s.id,
-        name: s.skill.name,
+        name: s.skill?.name || "Skill",
         status: s.status === 'VERIFIED' ? 'verified' : 'pending'
       }))
     };
@@ -313,16 +324,31 @@ export default function Dashboard() {
     }));
   };
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
-  if (!volunteer) return <div>No profile found</div>;
+  if (error) return (
+    <div style={{ padding: "50px", textAlign: "center" }}>
+      <h2>Access Error</h2>
+      <p>{error}</p>
+      <button
+        onClick={() => { localStorage.clear(); window.location.href = "/login"; }}
+        style={{ marginTop: "20px", padding: "10px 20px", cursor: "pointer", background: "#347362", color: "white", border: "none" }}
+      >
+        Go to Login
+      </button>
+    </div>
+  );
+  if (!volunteer || volunteer.id === 0) return (
+    <div style={{ padding: "50px", textAlign: "center" }}>
+      <h2>Loading Profile...</h2>
+      <p>If this takes too long, please try re-logging in.</p>
+    </div>
+  );
 
   const totalHours = calculateTotalHours(participations);
 
   return (
     <div>
       <DashboardHeader volunteer={volunteer} />
-      
+
       <div className={styles.dashboardContainer}>
         <HoursBadge totalHours={totalHours} />
 

@@ -1,4 +1,5 @@
-const API_BASE_URL = 'http://localhost:5000/api';
+export const API_BASE_URL = 'http://localhost:5000';
+const API_URL = `${API_BASE_URL}/api`;
 
 // Helper function to get auth token
 const getAuthToken = () => {
@@ -9,15 +10,18 @@ const getAuthToken = () => {
 const authFetch = async (url, options = {}) => {
   const token = getAuthToken();
   const headers = {
-    'Content-Type': 'application/json',
     ...options.headers,
   };
+
+  if (!(options.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  return fetch(`${API_BASE_URL}${url}`, {
+  return fetch(`${API_URL}${url}`, {
     ...options,
     headers,
   });
@@ -26,7 +30,7 @@ const authFetch = async (url, options = {}) => {
 // Auth API
 export const authAPI = {
   registerVolunteer: async (data) => {
-    const response = await fetch(`${API_BASE_URL}/auth/register/volunteer`, {
+    const response = await fetch(`${API_URL}/auth/register/volunteer`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -35,7 +39,7 @@ export const authAPI = {
   },
 
   registerOrganization: async (data) => {
-    const response = await fetch(`${API_BASE_URL}/auth/register/organization`, {
+    const response = await fetch(`${API_URL}/auth/register/organization`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -44,7 +48,7 @@ export const authAPI = {
   },
 
   login: async (data) => {
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -57,7 +61,7 @@ export const authAPI = {
   },
 
   googleAuth: async (data) => {
-    const response = await fetch(`${API_BASE_URL}/auth/google`, {
+    const response = await fetch(`${API_URL}/auth/google`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -82,12 +86,12 @@ export const authAPI = {
 // Missions API
 export const missionsAPI = {
   getAllMissions: async () => {
-    const response = await fetch(`${API_BASE_URL}/missions`);
+    const response = await fetch(`${API_URL}/missions`);
     return response.json();
   },
 
   getMissionById: async (id) => {
-    const response = await fetch(`${API_BASE_URL}/missions/${id}`);
+    const response = await fetch(`${API_URL}/missions/${id}`);
     return response.json();
   },
 
@@ -102,7 +106,7 @@ export const missionsAPI = {
   createMission: async (data) => {
     const response = await authFetch('/organization/missions', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: data instanceof FormData ? data : JSON.stringify(data),
     });
     return response.json();
   },
@@ -158,12 +162,12 @@ export const organizationsAPI = {
     if (search) params.append('search', search);
     if (limit) params.append('limit', limit);
     if (offset) params.append('offset', offset);
-    const response = await fetch(`${API_BASE_URL}/organizations?${params}`);
+    const response = await fetch(`${API_URL}/organizations?${params}`);
     return response.json();
   },
 
   getOrganizationById: async (id) => {
-    const response = await fetch(`${API_BASE_URL}/organizations/${id}`);
+    const response = await fetch(`${API_URL}/organizations/${id}`);
     return response.json();
   },
 
@@ -174,12 +178,20 @@ export const organizationsAPI = {
     });
     return response.json();
   },
+
+  uploadOrganizationProfilePhoto: async (formData) => {
+    const response = await authFetch('/organizations/profile/photo', {
+      method: 'PUT',
+      body: formData,
+    });
+    return response.json();
+  },
 };
 
 // Volunteers API
 export const volunteersAPI = {
   getAllVolunteers: async () => {
-    const response = await fetch(`${API_BASE_URL}/volunteers`);
+    const response = await fetch(`${API_URL}/volunteers`);
     return response.json();
   },
 
@@ -209,7 +221,7 @@ export const volunteersAPI = {
   },
 
   getMyParticipations: async () => {
-    const response = await authFetch('/participations/my-participations');
+    const response = await authFetch('/applications/my-participations');
     return response.json();
   },
 };
@@ -217,7 +229,7 @@ export const volunteersAPI = {
 // SDGs API
 export const sdgsAPI = {
   getMissionsBySDG: async (sdgId) => {
-    const response = await fetch(`${API_BASE_URL}/sdgs/missions?sdgId=${sdgId}`);
+    const response = await fetch(`${API_URL}/sdgs/missions?sdgId=${sdgId}`);
     return response.json();
   },
 };

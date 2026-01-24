@@ -1,9 +1,13 @@
 "use client"
 
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import styles from "../components/MissionForm.module.css";
+import { missionsAPI } from "../utils/api";
 
 export default function MissionForm() {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     missionName: "",
     description: "",
@@ -18,12 +22,12 @@ export default function MissionForm() {
 
 
   const competencyOptions = [
-    "Environmental Science","Project Management","Teaching","Medical Skills",
-    "Communication","Marketing","Fundraising","Event Planning","Leadership",
-    "Technical Skills","Social Work","Research","Design","Photography",
+    "Environmental Science", "Project Management", "Teaching", "Medical Skills",
+    "Communication", "Marketing", "Fundraising", "Event Planning", "Leadership",
+    "Technical Skills", "Social Work", "Research", "Design", "Photography",
   ]
 
-const [selectedCompetencies, setSelectedCompetencies] = useState(formData.competencies)
+  const [selectedCompetencies, setSelectedCompetencies] = useState(formData.competencies)
   const toggleCompetency = (c) => {
     setSelectedCompetencies(prev =>
       prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c]
@@ -52,9 +56,39 @@ const [selectedCompetencies, setSelectedCompetencies] = useState(formData.compet
     }
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    console.log("Form submitted:", formData)
+
+    try {
+      setLoading(true);
+
+      // Use FormData for file upload
+      const payload = new FormData();
+      payload.append("title", formData.missionName);
+      payload.append("description", formData.description);
+      payload.append("location", formData.location);
+      payload.append("startDate", new Date(formData.startDate).toISOString());
+      payload.append("endDate", new Date(formData.endDate).toISOString());
+      payload.append("volunteersNeeded", formData.volunteersNeeded || "0");
+
+      // Competencies/Skills: For now, we skip or send empty array logic
+      // If we need to send skills, we should check how backend parses it from FormData.
+      // Current controller expects keys. We can ignore skills for now as per previous complexity decision.
+      // payload.append("skills", "[]"); 
+
+      if (formData.image) {
+        payload.append("image", formData.image);
+      }
+
+      await missionsAPI.createMission(payload);
+      alert("Mission created successfully!");
+      navigate("/orgdashboard");
+    } catch (error) {
+      console.error("Creation failed", error);
+      alert("Failed to create mission: " + (error.message || "Unknown error"));
+    } finally {
+      setLoading(false);
+    }
   }
 
   const handleCancel = () => {
@@ -184,22 +218,21 @@ const [selectedCompetencies, setSelectedCompetencies] = useState(formData.compet
 
           <label>Competencies Required</label>
           <div className={styles["competencies-grid"]}>
-                      {competencyOptions.map(c => (
-                        <label
-                          key={c}
-                          className={`${styles["competency-checkbox"]} ${
-                            selectedCompetencies.includes(c) ? styles.selected : ""
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selectedCompetencies.includes(c)}
-                            onChange={() => toggleCompetency(c)}
-                          />
-                          <span className={styles["checkbox-label"]}>{c}</span>
-                        </label>
-                      ))}
-                    </div>
+            {competencyOptions.map(c => (
+              <label
+                key={c}
+                className={`${styles["competency-checkbox"]} ${selectedCompetencies.includes(c) ? styles.selected : ""
+                  }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedCompetencies.includes(c)}
+                  onChange={() => toggleCompetency(c)}
+                />
+                <span className={styles["checkbox-label"]}>{c}</span>
+              </label>
+            ))}
+          </div>
           {/* <label>Competencies Required</label>
           <textarea
             name="competencies"
@@ -213,8 +246,8 @@ const [selectedCompetencies, setSelectedCompetencies] = useState(formData.compet
 
         {/* Buttons */}
         <div className={styles.buttonGroup}>
-          <button type="submit" className={styles.btnCreate}>
-            Create Mission
+          <button type="submit" className={styles.btnCreate} disabled={loading}>
+            {loading ? "Creating..." : "Create Mission"}
           </button>
           <button
             type="button"

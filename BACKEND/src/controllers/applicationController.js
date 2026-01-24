@@ -12,9 +12,9 @@ async function applyToMission(req, res) {
       return res.status(400).json({ message: 'Mission non disponible' });
     }
 
-    
+
     const existing = await prisma.application.findUnique({
-      where: { missionId_volunteerId: { missionId, volunteerId } } 
+      where: { missionId_volunteerId: { missionId, volunteerId } }
     }).catch(() => null);
 
     if (existing) return res.status(400).json({ message: 'Vous avez déjà postulé' });
@@ -31,4 +31,54 @@ async function applyToMission(req, res) {
   }
 }
 
-module.exports = { applyToMission };
+// get all applications of logged-in volunteer
+async function getMyApplications(req, res) {
+  try {
+    const volunteerId = req.user.volunteer.id;
+    const applications = await prisma.application.findMany({
+      where: { volunteerId },
+      include: {
+        mission: {
+          include: { organization: true }
+        }
+      },
+      orderBy: { appliedAt: 'desc' }
+    });
+    res.json(applications);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+}
+
+// get participations (approved/completed applications)
+async function getMyParticipations(req, res) {
+  try {
+    const volunteerId = req.user.volunteer.id;
+    // Assuming COMPLETED status or similar tracks participation history
+    // For now we return approved/completed
+    const participations = await prisma.application.findMany({
+      where: {
+        volunteerId,
+        status: { in: ['APPROVED', 'COMPLETED'] }
+      },
+      include: {
+        mission: {
+          include: { organization: true }
+        }
+      },
+      orderBy: { appliedAt: 'desc' }
+    });
+    // Add dummy hours if not tracking properly in schema yet
+    const result = participations.map(p => ({
+      ...p,
+      hoursCompleted: p.hoursWorked || 0 // Assuming field might exist or fallback
+    }));
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+}
+
+module.exports = { applyToMission, getMyApplications, getMyParticipations };

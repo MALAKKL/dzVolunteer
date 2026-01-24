@@ -22,7 +22,7 @@
     "dotenv": "^16.6.1",
     "effect": "^3.18.4",
     "empathic": "^2.0.0",
-    "express": "^5.1.0",
+    "express": "^5.2.1",
     "exsolve": "^1.0.8",
     "fast-check": "^3.23.2",
     "giget": "^2.0.0",

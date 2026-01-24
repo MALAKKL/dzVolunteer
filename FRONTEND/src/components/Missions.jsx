@@ -7,7 +7,7 @@ import { WhatsappIcon, InstagramIcon, FacebookIcon, LinkedinIcon } from "./Socia
 import { Link } from "react-router-dom";
 import styles from "../components/Missions.module.css";
 import NavbarVisitor from "./navBarVisitor";
-import { missionsAPI } from "../utils/api";
+import { missionsAPI, API_BASE_URL } from "../utils/api";
 
 export default function Missions() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -45,8 +45,8 @@ export default function Missions() {
           description: mission.description,
           number: mission.volunteersNeeded.toString(),
           location: mission.location,
-          image: "/mp2.png", // Default image, could be enhanced
-          category: "General", // Could be derived from SDG
+          image: mission.image ? (mission.image.startsWith('http') ? mission.image : `${API_BASE_URL}${mission.image}`) : "/mp2.png",
+          category: mission.sdg?.title || "General",
         }));
         setMissions(transformedMissions);
         setError(null);
@@ -90,7 +90,7 @@ export default function Missions() {
   return (
     <>
       {/* Navbar with navigation logic */}
-      <NavbarVisitor 
+      <NavbarVisitor
         sections={sections}
         activeSection={activeSection}
         handleNavClick={handleNavClick}
@@ -141,7 +141,7 @@ export default function Missions() {
                       <strong>Volunteers needed:</strong> {mission.number}
                     </p>
 
-                    <Link to={`/missioncard/${mission.id}`} className={styles.missionSeeMoreBtn}>
+                    <Link to={`/volunteer/mission/${mission.id}`} className={styles.missionSeeMoreBtn}>
                       see more
                     </Link>
                   </div>

@@ -1,9 +1,10 @@
 "use client"
-import { useState, useRef } from "react"
-import { 
-  FiUpload, FiUser, FiMapPin, FiBriefcase, FiCalendar, FiFileText, FiCheckSquare, FiSave 
+import { useState, useRef, useEffect } from "react"
+import {
+  FiUpload, FiUser, FiMapPin, FiBriefcase, FiCalendar, FiFileText, FiCheckSquare, FiSave
 } from "react-icons/fi"
 import styles from "../styles/dashOrg.module.css"
+import { authAPI, organizationsAPI, API_BASE_URL } from "../utils/api"
 
 export default function Profile() {
   const [formData, setFormData] = useState({
@@ -11,24 +12,65 @@ export default function Profile() {
     location: "",
     fieldOfActivity: "Nature",
     dateOfCreation: "2020-01-10",
-    competencies: ["Environmental Science", "Project Management"],
+    competencies: [],
     description: "",
     image: null,
   })
+
+  // We need to store the org ID
+  const [orgId, setOrgId] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const [selectedCompetencies, setSelectedCompetencies] = useState(formData.competencies)
   const fileInputRef = useRef(null)
 
   const fieldOptions = [
-    "Nature","Education","Healthcare","Community Development","Arts & Culture",
-    "Sports & Recreation","Animal Welfare","Human Rights","Technology","Other",
+    "Nature", "Education", "Healthcare", "Community Development", "Arts & Culture",
+    "Sports & Recreation", "Animal Welfare", "Human Rights", "Technology", "Other",
   ]
 
   const competencyOptions = [
-    "Environmental Science","Project Management","Teaching","Medical Skills",
-    "Communication","Marketing","Fundraising","Event Planning","Leadership",
-    "Technical Skills","Social Work","Research","Design","Photography",
+    "Environmental Science", "Project Management", "Teaching", "Medical Skills",
+    "Communication", "Marketing", "Fundraising", "Event Planning", "Leadership",
+    "Technical Skills", "Social Work", "Research", "Design", "Photography",
   ]
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      setLoading(true);
+      const userProfile = await authAPI.getProfile();
+      // Assuming userProfile.organization contains the org details
+      // Or if it just has ID, we fetch detail
+      if (userProfile.organization) {
+        setOrgId(userProfile.organization.id);
+        const orgData = userProfile.organization;
+
+        setFormData(prev => ({
+          ...prev,
+          organizationName: orgData.name || "",
+          description: orgData.description || "",
+          // Map other fields if backend supports them, otherwise they stay default or empty
+          // For now we map what we know exists strictly, but we can try to use others if the backend was updated
+          location: orgData.location || "",
+          fieldOfActivity: orgData.fieldOfActivity || "Nature",
+          image: orgData.logo ? `${API_BASE_URL}${orgData.logo}` : null,
+          dateOfCreation: orgData.dateOfCreation ? orgData.dateOfCreation.split('T')[0] : "2020-01-10",
+        }));
+
+        if (orgData.competencies) {
+          setSelectedCompetencies(orgData.competencies);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to load profile", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -37,9 +79,26 @@ export default function Profile() {
 
   const handleImageClick = () => fileInputRef.current.click()
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files[0]
-    if (file) setFormData(prev => ({ ...prev, image: URL.createObjectURL(file) }))
+    if (file) {
+      // Display preview
+      setFormData(prev => ({ ...prev, image: URL.createObjectURL(file) }))
+
+      // Upload immediately
+      try {
+        const formDataUpload = new FormData();
+        formDataUpload.append('photo', file);
+        const response = await organizationsAPI.uploadOrganizationProfilePhoto(formDataUpload);
+        if (response.photo) {
+          setFormData(prev => ({ ...prev, image: `${API_BASE_URL}${response.photo}` }))
+          alert("Image uploaded successfully!");
+        }
+      } catch (err) {
+        console.error("Upload failed", err);
+        alert("Failed to upload image");
+      }
+    }
   }
 
   const toggleCompetency = (c) => {
@@ -48,11 +107,31 @@ export default function Profile() {
     )
   }
 
-  const handleSave = () => {
-    const dataToSave = { ...formData, competencies: selectedCompetencies }
-    console.log("[v1] Saving data:", dataToSave)
-    alert("Profile saved successfully!")
+  const handleSave = async () => {
+    if (!orgId) return;
+
+    try {
+      setLoading(true);
+      const dataToSave = {
+        name: formData.organizationName,
+        description: formData.description,
+        location: formData.location,
+        fieldOfActivity: formData.fieldOfActivity,
+        dateOfCreation: new Date(formData.dateOfCreation).toISOString(),
+        competencies: selectedCompetencies
+      };
+
+      await organizationsAPI.updateOrganization(orgId, dataToSave);
+      alert("Profile saved successfully!")
+    } catch (error) {
+      console.error("Save failed", error);
+      alert("Failed to save profile");
+    } finally {
+      setLoading(false);
+    }
   }
+
+  if (loading && !orgId) return <div>Loading profile...</div>;
 
   return (
     <div className={styles["profile-page"]}>
@@ -65,53 +144,53 @@ export default function Profile() {
       </div>
 
       <div className={styles["profile-content"]}>
-{/* Organization Image */}
-<section className={styles["profile-card"]}>
-  <h2 className={styles["section-title"]}>Organization Image</h2>
-  <p className={styles["section-subtitle"]}>
-    Upload a profile image for your organization
-  </p>
-  <div className={styles["image-upload-section"]} style={{ flexDirection: "column", alignItems: "center" }}>
-    <div
-      className={styles["image-placeholder-creative"]}
-      onClick={handleImageClick}
-      style={{ cursor: "pointer" }}
-    >
-      <div className={styles["image-inner-circle"]}>
-        {formData.image ? (
-          <img
-            src={formData.image}
-            alt="Organization"
-            className={styles["profile-img"]}
-            style={{ width: "100px", height: "100px", borderRadius: "50%", objectFit: "cover" }}
-          />
-        ) : (
-          <FiUpload size={20} />
-        )}
-      </div>
-      {!formData.image && (
-        <span
-          className={styles["no-image-text"]}
-          style={{ top: "20px", position: "relative", color: "#347362" }}
-        >
-          No image
-        </span>
-      )}
-    </div>
+        {/* Organization Image */}
+        <section className={styles["profile-card"]}>
+          <h2 className={styles["section-title"]}>Organization Image</h2>
+          <p className={styles["section-subtitle"]}>
+            Upload a profile image for your organization
+          </p>
+          <div className={styles["image-upload-section"]} style={{ flexDirection: "column", alignItems: "center" }}>
+            <div
+              className={styles["image-placeholder-creative"]}
+              onClick={handleImageClick}
+              style={{ cursor: "pointer" }}
+            >
+              <div className={styles["image-inner-circle"]}>
+                {formData.image ? (
+                  <img
+                    src={formData.image}
+                    alt="Organization"
+                    className={styles["profile-img"]}
+                    style={{ width: "100px", height: "100px", borderRadius: "50%", objectFit: "cover" }}
+                  />
+                ) : (
+                  <FiUpload size={20} />
+                )}
+              </div>
+              {!formData.image && (
+                <span
+                  className={styles["no-image-text"]}
+                  style={{ top: "20px", position: "relative", color: "#347362" }}
+                >
+                  No image
+                </span>
+              )}
+            </div>
 
-    <input
-      type="file"
-      accept="image/*"
-      ref={fileInputRef}
-      style={{ display: "none" }}
-      onChange={handleImageChange}
-    />
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              style={{ display: "none" }}
+              onChange={handleImageChange}
+            />
 
-    <button className={styles["upload-btn"]} onClick={handleImageClick}>
-      <FiUpload size={20} /> Upload Image
-    </button>
-  </div>
-</section>
+            <button className={styles["upload-btn"]} onClick={handleImageClick}>
+              <FiUpload size={20} /> Upload Image
+            </button>
+          </div>
+        </section>
 
 
         {/* Details Grid */}
@@ -200,9 +279,8 @@ export default function Profile() {
             {competencyOptions.map(c => (
               <label
                 key={c}
-                className={`${styles["competency-checkbox"]} ${
-                  selectedCompetencies.includes(c) ? styles.selected : ""
-                }`}
+                className={`${styles["competency-checkbox"]} ${selectedCompetencies.includes(c) ? styles.selected : ""
+                  }`}
               >
                 <input
                   type="checkbox"
@@ -217,8 +295,8 @@ export default function Profile() {
 
         {/* Save Button */}
         <div className={styles["save-button-container"]}>
-          <button className={styles["save-btn"]} onClick={handleSave}>
-            <FiSave size={18} /> Save Profile
+          <button className={styles["save-btn"]} onClick={handleSave} disabled={loading}>
+            <FiSave size={18} /> {loading ? "Saving..." : "Save Profile"}
           </button>
         </div>
       </div>

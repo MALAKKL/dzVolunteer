@@ -1,90 +1,80 @@
 "use client"
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import styles from "../styles/dashOrg.module.css"
+import { authAPI, organizationsAPI, missionsAPI } from "../utils/api"
 
 export default function Volunteers() {
-  // Sample data - replace with your actual data
-  const [volunteers, setVolunteers] = useState([
-    {
-      id: 1,
-      name: "Sarah Johnson",
-      email: "sarah.j@email.com",
-      phone: "+1 234-567-8900",
-      mission: "Beach Cleanup Drive",
-      appliedDate: "2026-01-15",
-      status: "pending",
-      skills: "Environmental Science",
-      availability: "Weekends"
-    },
-    {
-      id: 2,
-      name: "Michael Chen",
-      email: "m.chen@email.com",
-      phone: "+1 234-567-8901",
-      mission: "Beach Cleanup Drive",
-      appliedDate: "2026-01-18",
-      status: "pending",
-      skills: "Team Leadership",
-      availability: "Flexible"
-    },
-    {
-      id: 3,
-      name: "Emma Martinez",
-      email: "emma.m@email.com",
-      phone: "+1 234-567-8902",
-      mission: "Food Bank Distribution",
-      appliedDate: "2026-01-10",
-      status: "approved",
-      skills: "Logistics",
-      availability: "Weekdays"
-    },
-    {
-      id: 4,
-      name: "James Wilson",
-      email: "j.wilson@email.com",
-      phone: "+1 234-567-8903",
-      mission: "Food Bank Distribution",
-      appliedDate: "2026-01-20",
-      status: "pending",
-      skills: "Community Outreach",
-      availability: "Mornings"
-    },
-    {
-      id: 5,
-      name: "Lisa Anderson",
-      email: "lisa.a@email.com",
-      phone: "+1 234-567-8904",
-      mission: "Youth Mentorship Program",
-      appliedDate: "2026-01-12",
-      status: "rejected",
-      skills: "Education",
-      availability: "Afternoons"
-    },
-    {
-      id: 6,
-      name: "David Kim",
-      email: "d.kim@email.com",
-      phone: "+1 234-567-8905",
-      mission: "Youth Mentorship Program",
-      appliedDate: "2026-01-22",
-      status: "pending",
-      skills: "Mentoring, Sports",
-      availability: "Evenings"
-    }
-  ])
-
+  const [volunteers, setVolunteers] = useState([])
+  const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState("all")
 
-  const handleApprove = (id) => {
-    setVolunteers(volunteers.map(v => 
-      v.id === id ? { ...v, status: "approved" } : v
-    ))
+  useEffect(() => {
+    fetchVolunteers()
+  }, [])
+
+  const fetchVolunteers = async () => {
+    try {
+      setLoading(true)
+      const profile = await authAPI.getProfile()
+      if (profile.organization) {
+        const orgDetails = await organizationsAPI.getOrganizationById(profile.organization.id)
+        if (orgDetails.missions) {
+          const allApplicants = [];
+
+          // Fetch applicants for each mission
+          await Promise.all(orgDetails.missions.map(async (mission) => {
+            try {
+              const applicants = await missionsAPI.getMissionApplicants(mission.id);
+              // Transform and add mission title
+              applicants.forEach(app => {
+                allApplicants.push({
+                  id: app.id, // Application ID
+                  name: `${app.volunteer.firstName} ${app.volunteer.lastName}`,
+                  email: app.volunteer.email || "N/A", // Backend might not send email in public profile? Check.
+                  // Actually volunteer object in 'getMissionApplicants' might be limited. 
+                  // But usually for Org viewing applicants, it should share details.
+                  phone: app.volunteer.phone || "N/A",
+                  mission: mission.title,
+                  appliedDate: app.appliedAt,
+                  status: app.status.toLowerCase(), // Backend is usually uppercase PENDING
+                  skills: app.volunteer.skills ? app.volunteer.skills.map(s => s.name).join(", ") : "N/A",
+                  availability: app.volunteer.availabilities || "N/A"
+                });
+              });
+            } catch (err) {
+              console.error(`Failed to fetch applicants for mission ${mission.id}`, err);
+            }
+          }));
+
+          setVolunteers(allApplicants);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching volunteers", error)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleReject = (id) => {
-    setVolunteers(volunteers.map(v => 
-      v.id === id ? { ...v, status: "rejected" } : v
-    ))
+  const handleApprove = async (applicationId) => {
+    try {
+      await missionsAPI.updateApplicationStatus(applicationId, "APPROVED");
+      // Update local state
+      setVolunteers(prev => prev.map(v => v.id === applicationId ? { ...v, status: "approved" } : v));
+    } catch (error) {
+      console.error("Failed to approve", error);
+      alert("Failed to approve volunteer");
+    }
+  }
+
+  const handleReject = async (applicationId) => {
+    try {
+      await missionsAPI.updateApplicationStatus(applicationId, "REJECTED");
+      setVolunteers(prev => prev.map(v => v.id === applicationId ? { ...v, status: "rejected" } : v));
+    } catch (error) {
+      console.error("Failed to reject", error);
+      alert("Failed to reject volunteer");
+    }
   }
 
   // Group volunteers by mission
@@ -97,8 +87,8 @@ export default function Volunteers() {
   }, {})
 
   // Filter volunteers
-  const filteredVolunteers = filter === "all" 
-    ? volunteers 
+  const filteredVolunteers = filter === "all"
+    ? volunteers
     : volunteers.filter(v => v.status === filter)
 
   const filteredByMission = filteredVolunteers.reduce((acc, volunteer) => {
@@ -113,7 +103,7 @@ export default function Volunteers() {
     return `${styles['status-badge']} ${styles[`status-${status}`]}`
   }
 
-  // const pendingCount = volunteers.filter(v => v.status === "pending").length
+  if (loading) return <div>Loading volunteers...</div>
 
   return (
     <div className={styles["page-container"]}>
@@ -124,33 +114,28 @@ export default function Volunteers() {
             Manage your volunteers across all missions
           </p>
         </div>
-        {/* {pendingCount > 0 && (
-          <div className={styles["pending-badge"]}>
-            {pendingCount} Pending
-          </div>
-        )} */}
       </div>
 
       <div className={styles["filter-bar"]}>
-        <button 
+        <button
           className={filter === "all" ? styles["filter-active"] : styles["filter-btn"]}
           onClick={() => setFilter("all")}
         >
           All ({volunteers.length})
         </button>
-        <button 
+        <button
           className={filter === "pending" ? styles["filter-active"] : styles["filter-btn"]}
           onClick={() => setFilter("pending")}
         >
           Pending ({volunteers.filter(v => v.status === "pending").length})
         </button>
-        <button 
+        <button
           className={filter === "approved" ? styles["filter-active"] : styles["filter-btn"]}
           onClick={() => setFilter("approved")}
         >
           Approved ({volunteers.filter(v => v.status === "approved").length})
         </button>
-        <button 
+        <button
           className={filter === "rejected" ? styles["filter-active"] : styles["filter-btn"]}
           onClick={() => setFilter("rejected")}
         >
@@ -216,7 +201,7 @@ export default function Volunteers() {
 
                       {volunteer.status === "pending" && (
                         <div className={styles["volunteer-actions"]}>
-                          <button 
+                          <button
                             className={styles["btn-approve"]}
                             onClick={() => handleApprove(volunteer.id)}
                           >
@@ -225,7 +210,7 @@ export default function Volunteers() {
                             </svg>
                             Approve
                           </button>
-                          <button 
+                          <button
                             className={styles["btn-reject"]}
                             onClick={() => handleReject(volunteer.id)}
                           >
