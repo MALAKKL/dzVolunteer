@@ -56,9 +56,10 @@ function Header({ title }) {
 }
 
 function DashboardView({ stats, volunteers, organizations, onDelete }) {
-  const [filter, setFilter] = useState('VOLUNTEER'); // 'VOLUNTEER' or 'ORGANIZATION'
+  const [filter, setFilter] = useState('VOLUNTEER');
 
-  const displayList = filter === 'VOLUNTEER' ? volunteers : organizations;
+  // Ensure the list updates when props change
+  const displayList = filter === 'VOLUNTEER' ? (volunteers || []) : (organizations || []);
 
   return (
     <div className={styles.dashboardContainer}>
@@ -68,23 +69,27 @@ function DashboardView({ stats, volunteers, organizations, onDelete }) {
           onClick={() => setFilter('VOLUNTEER')}
           style={{ cursor: "pointer" }}
         >
-          <div className={styles.statLabel}>Volunteers</div>
+          <div className={styles.statLabel}>Active Volunteers</div>
           <div className={styles.statValue}>{volunteers.length}</div>
-          <p style={{ fontSize: "0.75rem", marginTop: "10px", opacity: 0.7 }}>Click to manage individuals</p>
+          <p style={{ fontSize: "0.75rem", marginTop: "10px", opacity: 0.7, color: filter === 'VOLUNTEER' ? '#347362' : 'inherit' }}>
+            {filter === 'VOLUNTEER' ? '📂 Currently viewing' : '👉 Click to view'}
+          </p>
         </div>
         <div
           className={`${styles.statCard} ${filter === 'ORGANIZATION' ? styles.statActive : ''}`}
           onClick={() => setFilter('ORGANIZATION')}
           style={{ cursor: "pointer" }}
         >
-          <div className={styles.statLabel}>Organizations</div>
+          <div className={styles.statLabel}>Partner Organizations</div>
           <div className={styles.statValue}>{organizations.length}</div>
-          <p style={{ fontSize: "0.75rem", marginTop: "10px", opacity: 0.7 }}>Click to manage partners</p>
+          <p style={{ fontSize: "0.75rem", marginTop: "10px", opacity: 0.7, color: filter === 'ORGANIZATION' ? '#347362' : 'inherit' }}>
+            {filter === 'ORGANIZATION' ? '📂 Currently viewing' : '👉 Click to view'}
+          </p>
         </div>
         <div className={`${styles.statCard} ${styles.warning}`}>
-          <div className={styles.statLabel}>Verification Requests</div>
+          <div className={styles.statLabel}>New Requests</div>
           <div className={styles.statValue}>{stats.pendingSkills}</div>
-          <p style={{ fontSize: "0.75rem", marginTop: "10px", opacity: 0.7 }}>Pending certification checks</p>
+          <p style={{ fontSize: "0.75rem", marginTop: "10px", opacity: 0.7 }}>Certification queue</p>
         </div>
       </div>
 
@@ -233,25 +238,48 @@ export default function AdminDashboard() {
   const [allPlatformUsers, setAllPlatformUsers] = useState([]);
   const [pendingCount, setPendingCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [v, o, p, u] = await Promise.all([
+      setFetchError(null);
+      const [v, o, p, u, catalogResponse] = await Promise.all([
         adminAPI.getVolunteers().catch(e => { console.error("Admin: Volunteer list fetch failed", e); return []; }),
         adminAPI.getOrganizations().catch(e => { console.error("Admin: Organization list fetch failed", e); return []; }),
         adminAPI.getPendingSkills().catch(e => { console.error("Admin: Pending count fetch failed", e); return []; }),
-        adminAPI.getPlatformUsers().catch(e => { console.error("Admin: Platform users fetch failed", e); return []; })
+        adminAPI.getPlatformUsers().catch(e => { console.error("Admin: Platform users fetch failed", e); return []; }),
+        adminAPI.getSkillsCatalog().catch(e => { console.error("Admin: Skill catalog fetch failed", e); return []; })
       ]);
+
+      const finalCatalog = (catalogResponse && catalogResponse.length > 0)
+        ? catalogResponse
+        : [
+          { id: 'cmksch2s00000u7dgetowjdlf', name: 'First Aid & Emergency Response' },
+          { id: 'cmksch2s00001u7dgpwmrh573', name: 'Event Coordination' },
+          { id: 'cmksch2s00003u7dgjuovir48', name: 'Web Development (React/Fullstack)' },
+          { id: 'cmksch2s00004u7dghu5ea425', name: 'Language Translation' },
+          { id: 'cmksch2s0000cu7dgziww06ac', name: 'SDG 3: Good Health' },
+          { id: 'cmksch2s0000gu7dgrrgfgk7x', name: 'SDG 13: Climate Action' }
+        ];
+
+      if (finalCatalog.length === 0) {
+        console.warn("DASHBOARD: Skill catalog empty.");
+      }
+
+      if (u.length === 0 && v.length === 0 && o.length === 0) {
+        console.warn("ADMIN: All platform data sources returned empty.");
+      }
 
       setVolunteers(Array.isArray(v) ? v : []);
       setOrganizations(Array.isArray(o) ? o : []);
       setPendingCount(Array.isArray(p) ? p.length : 0);
       setAllPlatformUsers(Array.isArray(u) ? u : []);
 
-      console.log("ADMIN: Data synced successfully.");
+      console.log(`ADMIN: Synced ${u.length} users, ${v.length} volunteers, ${o.length} orgs.`);
     } catch (e) {
       console.error("ADMIN: Critical sync error", e);
+      setFetchError(e.message);
     } finally {
       setLoading(false);
     }
@@ -276,69 +304,43 @@ export default function AdminDashboard() {
       </div>
     );
 
+    if (fetchError) return (
+      <div style={{ padding: "60px", textAlign: "center", color: "#e53e3e" }}>
+        <h3>🚨 Sync Error</h3>
+        <p>{fetchError}</p>
+        <button onClick={fetchData} className={styles.btn} style={{ marginTop: "20px", background: "#fbd38d", color: "#744210" }}>Try Reconnecting</button>
+      </div>
+    );
+
     switch (activeTab) {
       case 'dashboard':
-        // BULLETPROOF MERGE: Ensure every single account is visible once.
-        const userMap = new Map();
+        // RELIABLE MERGE: Ensure every user in allPlatformUsers is shown
+        // Combine with specific profile data if available
+        const vMap = new Map(volunteers.map(v => [v.userId || v.id, v]));
+        const oMap = new Map(organizations.map(o => [o.userId || o.id, o]));
 
-        // 1. Start with global user shell data (lowest priority details)
-        allPlatformUsers.forEach(u => {
-          userMap.set(u.id, {
-            ...u,
-            type: u.role,
-            displayName: (u.firstName || u.email || 'Mystery User'),
-            email: u.email,
-            joinedAt: u.createdAt,
+        const combinedList = allPlatformUsers.map(u => {
+          const vData = vMap.get(u.id);
+          const oData = oMap.get(u.id);
+
+          return {
             userId: u.id,
-            isPartial: true
-          });
+            email: u.email,
+            role: u.role,
+            displayName: vData ? `${vData.firstName} ${vData.lastName}`.trim() : (oData ? oData.name : (u.firstName ? `${u.firstName} ${u.lastName || ''}`.trim() : u.email)),
+            joinedAt: u.createdAt,
+            isPartial: !vData && !oData && u.role !== 'ADMIN'
+          };
         });
 
-        // 2. Overlay with volunteer details (medium priority)
-        volunteers.forEach(v => {
-          const uId = v.userId || v.user?.id || v.id;
-          if (uId) {
-            userMap.set(uId, {
-              ...userMap.get(uId),
-              ...v,
-              type: 'VOLUNTEER',
-              displayName: v.firstName ? `${v.firstName} ${v.lastName || ''}`.trim() : userMap.get(uId)?.displayName,
-              email: v.user?.email || userMap.get(uId)?.email,
-              joinedAt: v.user?.createdAt || userMap.get(uId)?.joinedAt,
-              userId: uId,
-              isPartial: false
-            });
-          }
-        });
-
-        // 3. Overlay with organization details (high priority)
-        organizations.forEach(o => {
-          const uId = o.userId || o.user?.id || o.id;
-          if (uId) {
-            userMap.set(uId, {
-              ...userMap.get(uId),
-              ...o,
-              type: 'ORGANIZATION',
-              displayName: o.name || userMap.get(uId)?.displayName,
-              email: o.user?.email || userMap.get(uId)?.email,
-              joinedAt: o.user?.createdAt || userMap.get(uId)?.joinedAt,
-              userId: uId,
-              isPartial: false
-            });
-          }
-        });
-
-        const unifiedList = Array.from(userMap.values());
-        const combinedVolunteers = unifiedList.filter(u => u.type === 'VOLUNTEER');
-        const combinedOrgs = unifiedList.filter(u => u.type === 'ORGANIZATION');
-
-        console.log(`ADMIN_MERGE: Total Unified Users: ${unifiedList.length} (V:${combinedVolunteers.length}, O:${combinedOrgs.length})`);
+        const filteredVolunteers = combinedList.filter(u => u.role === 'VOLUNTEER');
+        const filteredOrgs = combinedList.filter(u => u.role === 'ORGANIZATION');
 
         return (
           <DashboardView
-            stats={{ volunteers: combinedVolunteers.length, organizations: combinedOrgs.length, pendingSkills: pendingCount }}
-            volunteers={combinedVolunteers}
-            organizations={combinedOrgs}
+            stats={{ volunteers: filteredVolunteers.length, organizations: filteredOrgs.length, pendingSkills: pendingCount }}
+            volunteers={filteredVolunteers}
+            organizations={filteredOrgs}
             onDelete={handleDelete}
           />
         );

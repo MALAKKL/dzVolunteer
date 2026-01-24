@@ -41,7 +41,30 @@ async function initAdmin() {
     console.error("Admin initialization failed:", e.message);
   }
 }
-initAdmin();
+
+async function seedInitialSkills() {
+  try {
+    const count = await prisma.skill.count();
+    if (count === 0) {
+      console.log("🌱 Database is empty. Seeding essential skills...");
+      const skills = [
+        { name: "SDG 1: No Poverty", description: "Economic empowerment and support", requiresVerification: false },
+        { name: "SDG 2: Zero Hunger", description: "Food security and aid", requiresVerification: false },
+        { name: "SDG 3: Good Health", description: "Medical and health advocacy", requiresVerification: true },
+        { name: "SDG 4: Quality Education", description: "Teaching and literacy", requiresVerification: true },
+        { name: "First Aid & CPR", description: "Emergency medical response", requiresVerification: true },
+        { name: "Graphic Design", description: "Digital content creation", requiresVerification: true },
+        { name: "Web Development", description: "Frontend and Backend development", requiresVerification: true }
+      ];
+      await prisma.skill.createMany({ data: skills });
+      console.log("✅ Seeded 7 essential skills.");
+    }
+  } catch (e) {
+    console.error("Skill seeding failed:", e.message);
+  }
+}
+
+initAdmin().then(seedInitialSkills);
 
 // Initialize app BEFORE using routes
 const app = express();

@@ -342,4 +342,8 @@ export const adminAPI = {
     });
     return response.json();
   },
+  getSkillsCatalog: async () => {
+    const response = await fetch(`${API_URL}/skills`);
+    return response.json();
+  }
 };

@@ -305,21 +305,18 @@ export default function Dashboard() {
 
         console.log("DASHBOARD: Loading secondary resources...")
         const [apps, parts, catalogResponse] = await Promise.all([
-          volunteersAPI.getMyApplications().catch(() => []),
-          volunteersAPI.getMyParticipations().catch(() => []),
-          skillsAPI.getAllSkills().catch(() => [])
+          volunteersAPI.getMyApplications().catch(e => { console.error("DASHBOARD: Apps failed", e); return [] }),
+          volunteersAPI.getMyParticipations().catch(e => { console.error("DASHBOARD: Parts failed", e); return [] }),
+          skillsAPI.getAllSkills().catch(e => { console.error("DASHBOARD: Catalog failed", e); return [] })
         ])
 
         const finalCatalog = (catalogResponse && catalogResponse.length > 0)
           ? catalogResponse
-          : [
-            { id: 'cmksch2s00000u7dgetowjdlf', name: 'First Aid & Emergency Response' },
-            { id: 'cmksch2s00001u7dgpwmrh573', name: 'Event Coordination' },
-            { id: 'cmksch2s00003u7dgjuovir48', name: 'Web Development (React/Fullstack)' },
-            { id: 'cmksch2s00004u7dghu5ea425', name: 'Language Translation' },
-            { id: 'cmksch2s0000cu7dgziww06ac', name: 'SDG 3: Good Health' },
-            { id: 'cmksch2s0000gu7dgrrgfgk7x', name: 'SDG 13: Climate Action' }
-          ];
+          : [];
+
+        if (finalCatalog.length === 0) {
+          console.warn("DASHBOARD: Skill catalog is empty. Skill addition might fail.");
+        }
 
         setVolunteer(transformProfile(profileData))
         setApplications(apps)
@@ -370,13 +367,19 @@ export default function Dashboard() {
     if (certificateFile) formData.append("certificate", certificateFile)
 
     try {
+      if (!selectedSkillId) throw new Error("No skill selected from catalog.");
+
+      console.log(`DASHBOARD: Sending verification request for Item ID: ${selectedSkillId}`);
       const res = await volunteersAPI.addSkillWithCertificate(formData)
-      alert("Skill added successfully!")
+
+      alert("Verification request submitted! Admin will review your document.")
       setShowSkillModal(false)
-      window.location.reload()
+      // Soft refresh
+      const profileData = await volunteersAPI.getMyProfile()
+      setVolunteer(transformProfile(profileData))
     } catch (e) {
-      console.error("DASHBOARD: Skill addition failed!", e);
-      alert(`Submission Error: ${e.message}`)
+      console.error("DASHBOARD: Skill addition crashed!", e);
+      alert(`Submission Error: ${e.message}. Tip: Check if this skill is already on your list.`)
     } finally {
       setIsLoadingSkill(false)
     }
