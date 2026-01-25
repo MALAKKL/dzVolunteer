@@ -4,7 +4,8 @@ import styles from "../styles/dashOrg.module.css"
 
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom";
-import { authAPI, organizationsAPI, API_BASE_URL } from "../utils/api";
+import { authAPI, organizationsAPI } from "../utils/api";
+import { getImageUrl } from "../utils/imageUtils";
 
 export default function Missions() {
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -26,7 +27,7 @@ export default function Missions() {
       if (profile.organization) {
         setOrgInfo({
           name: profile.organization.name,
-          image: profile.organization.logo ? `${API_BASE_URL}${profile.organization.logo}` : "/origo.png"
+          image: getImageUrl(profile.organization.logo, "/origo.png")
         });
 
         const orgDetails = await organizationsAPI.getOrganizationById(profile.organization.id);
@@ -101,7 +102,7 @@ export default function Missions() {
           {currentMissions.length > 0 ? currentMissions.map((mission) => (
             <div key={mission.id} className={styles["mission-card"]}>
               <div className={styles["mission-image"]}>
-                <img src={mission.image ? `${API_BASE_URL}${mission.image}` : "/estin.jpg"} alt={mission.title} onError={(e) => e.target.src = "/placeholder.svg"} />
+                <img src={getImageUrl(mission.image, "/estin.jpg")} alt={mission.title} onError={(e) => e.target.src = "/placeholder.svg"} />
               </div>
               <div className={styles["mission-content"]}>
                 <h3 className={styles["mission-title"]}>{mission.title}</h3>
@@ -132,7 +133,7 @@ export default function Missions() {
           {archivedMissions.length > 0 ? archivedMissions.map((mission) => (
             <div key={mission.id} className={`${styles["mission-card"]} ${styles.archived}`}>
               <div className={styles["mission-image"]}>
-                <img src={mission.image ? `${API_BASE_URL}${mission.image}` : "/estin3.jpg"} alt={mission.title} onError={(e) => e.target.src = "/placeholder.svg"} />
+                <img src={getImageUrl(mission.image, "/estin3.jpg")} alt={mission.title} onError={(e) => e.target.src = "/placeholder.svg"} />
               </div>
               <div className={styles["mission-content"]}>
                 <h3 className={styles["mission-title"]}>{mission.title}</h3>

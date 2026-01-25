@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from "react"
 import styles from '../components/volDashboard.module.css'
-import { volunteersAPI, authAPI, skillsAPI, sdgsAPI, API_BASE_URL } from '../utils/api'
+import { volunteersAPI, authAPI, skillsAPI, sdgsAPI } from '../utils/api'
+import { getImageUrl } from '../utils/imageUtils'
 
 // Utility Functions
 function calculateTotalHours(participations) {
@@ -77,7 +78,7 @@ function ProfileCard({
 
       <div className={styles.profilePhoto} onClick={() => document.getElementById('volunteer-photo-input').click()} style={{ cursor: "pointer", overflow: "hidden", position: "relative" }}>
         {volunteer.photo === '👤' ? '👤' : (
-          <img src={volunteer.photo} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <img src={getImageUrl(volunteer.photo)} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         )}
         <div style={{ position: "absolute", bottom: 0, right: 0, background: "#347362", color: "white", padding: "4px", borderRadius: "50%", fontSize: "12px" }}>📸</div>
       </div>
@@ -336,10 +337,7 @@ export default function Dashboard() {
 
   const transformProfile = (data) => {
     if (!data) return null
-    let photoUrl = '👤'
-    if (data.volunteer?.photo) {
-      photoUrl = data.volunteer.photo.startsWith('http') ? data.volunteer.photo : `${API_BASE_URL}${data.volunteer.photo}`
-    }
+    const photoUrl = data.volunteer?.photo ? getImageUrl(data.volunteer.photo) : '👤';
 
     return {
       id: data.volunteer?.id || 'new-user',

@@ -4,7 +4,8 @@ import {
   FiUpload, FiUser, FiMapPin, FiBriefcase, FiCalendar, FiFileText, FiCheckSquare, FiSave
 } from "react-icons/fi"
 import styles from "../styles/dashOrg.module.css"
-import { authAPI, organizationsAPI, API_BASE_URL } from "../utils/api"
+import { authAPI, organizationsAPI } from "../utils/api"
+import { getImageUrl } from "../utils/imageUtils"
 
 export default function Profile() {
   const [formData, setFormData] = useState({
@@ -57,7 +58,7 @@ export default function Profile() {
           // For now we map what we know exists strictly, but we can try to use others if the backend was updated
           location: orgData.location || "",
           fieldOfActivity: orgData.fieldOfActivity || "Nature",
-          image: orgData.logo ? `${API_BASE_URL}${orgData.logo}` : null,
+          image: getImageUrl(orgData.logo),
           dateOfCreation: orgData.dateOfCreation ? orgData.dateOfCreation.split('T')[0] : "2020-01-10",
         }));
 
@@ -91,7 +92,7 @@ export default function Profile() {
         formDataUpload.append('photo', file);
         const response = await organizationsAPI.uploadOrganizationProfilePhoto(formDataUpload);
         if (response.photo) {
-          setFormData(prev => ({ ...prev, image: `${API_BASE_URL}${response.photo}` }))
+          setFormData(prev => ({ ...prev, image: getImageUrl(response.photo) }))
           alert("Image uploaded successfully!");
           // Trigger navbar refresh
           window.dispatchEvent(new Event("profileUpdate"));

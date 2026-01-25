@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import styles from "../components/Organizations.module.css";
 import NavbarVisitor from "./navBarVisitor";
 import { organizationsAPI } from "../utils/api";
+import { getImageUrl } from "../utils/imageUtils";
 
 export default function OrganizationsPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -32,7 +33,7 @@ export default function OrganizationsPage() {
           id: org.id,
           name: org.name,
           subtitle: org.description || "Non-profit organization",
-          image: org.logoUrl || "/organization-default.jpg",
+          image: getImageUrl(org.logo || org.logoUrl, "/organization-default.jpg"),
           description: org.mission || org.description || "Dedicated to making a positive impact in the community.",
         }));
         setOrganizations(transformedOrgs);
@@ -69,7 +70,7 @@ export default function OrganizationsPage() {
   return (
     <>
       {/* Pass required props to NavbarVisitor */}
-      <NavbarVisitor 
+      <NavbarVisitor
         sections={sections}
         activeSection={activeSection}
         handleNavClick={handleNavClick}

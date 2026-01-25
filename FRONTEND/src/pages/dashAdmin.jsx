@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import styles from '../components/dashAdmin.module.css';
-import { adminAPI, API_BASE_URL } from "../utils/api";
+import { adminAPI } from "../utils/api";
+import { getImageUrl } from "../utils/imageUtils";
 
 const formatDate = (date) => date ? new Date(date).toLocaleDateString('en-US') : "N/A";
 
@@ -208,7 +209,7 @@ function SkillValidationView() {
                   <td><span style={{ background: "#edf2f7", padding: "4px 10px", borderRadius: "6px", fontSize: "0.9rem" }}>{v.skill?.name}</span></td>
                   <td>
                     {v.certificate ? (
-                      <a href={`${API_BASE_URL}${v.certificate}`} target="_blank" rel="noreferrer" style={{ color: "#3182ce", textDecoration: "underline", fontWeight: "bold" }}>
+                      <a href={getImageUrl(v.certificate)} target="_blank" rel="noreferrer" style={{ color: "#3182ce", textDecoration: "underline", fontWeight: "bold" }}>
                         Open document
                       </a>
                     ) : (

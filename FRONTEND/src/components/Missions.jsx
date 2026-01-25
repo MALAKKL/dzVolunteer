@@ -7,7 +7,8 @@ import { WhatsappIcon, InstagramIcon, FacebookIcon, LinkedinIcon } from "./Socia
 import { Link } from "react-router-dom";
 import styles from "../components/Missions.module.css";
 import NavbarVisitor from "./navBarVisitor";
-import { missionsAPI, API_BASE_URL } from "../utils/api";
+import { missionsAPI } from "../utils/api";
+import { getImageUrl } from "../utils/imageUtils";
 
 export default function Missions() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -45,7 +46,7 @@ export default function Missions() {
           description: mission.description,
           number: mission.volunteersNeeded.toString(),
           location: mission.location,
-          image: mission.image ? (mission.image.startsWith('http') ? mission.image : `${API_BASE_URL}${mission.image}`) : "/mp2.png",
+          image: getImageUrl(mission.image, "/mp2.png"),
           category: mission.sdg?.title || "General",
         }));
         setMissions(transformedMissions);

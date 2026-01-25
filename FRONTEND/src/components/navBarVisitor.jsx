@@ -4,7 +4,8 @@ import { SiX } from "react-icons/si";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FiGrid } from "react-icons/fi"; // Simple dashboard icon
 import { useEffect, useState } from "react";
-import { authAPI, API_BASE_URL } from "../utils/api";
+import { authAPI } from "../utils/api";
+import { getImageUrl } from "../utils/imageUtils";
 
 export default function NavbarVisitor({ sections, activeSection, handleNavClick }) {
   const navigate = useNavigate();
@@ -41,9 +42,7 @@ export default function NavbarVisitor({ sections, activeSection, handleNavClick 
       }
 
       if (photoUrl) {
-        // If it's a relative path, prepend base URL
-        const finalUrl = photoUrl.startsWith('http') ? photoUrl : `${API_BASE_URL}${photoUrl}`;
-        setProfilePic(finalUrl);
+        setProfilePic(getImageUrl(photoUrl));
       } else {
         setProfilePic(profile.role === "ORGANIZATION" ? "/origo.png" : "/vol1.png");
       }

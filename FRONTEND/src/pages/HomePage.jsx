@@ -10,7 +10,8 @@ import { FaMapMarkerAlt, FaEnvelope, FaClock, FaPhone } from "react-icons/fa";
 import { useEffect, useRef, useState } from "react";
 import Counter from "../components/Counter";
 import { useMemo } from "react";
-import { missionsAPI, API_BASE_URL } from "../utils/api";
+import { missionsAPI } from "../utils/api";
+import { getImageUrl } from "../utils/imageUtils";
 
 export default function Home() {
   const [activeSection, setActiveSection] = useState("home")
@@ -203,7 +204,7 @@ export default function Home() {
                   <div className="mission-card" key={mission.id}>
                     <div className="mission-image">
                       <img
-                        src={mission.image ? (mission.image.startsWith('http') ? mission.image : `${API_BASE_URL}${mission.image}`) : '/placeholder.jpg'}
+                        src={getImageUrl(mission.image)}
                         alt={mission.title}
                         onError={(e) => {
                           e.target.src = '/placeholder.jpg'
@@ -243,7 +244,7 @@ export default function Home() {
             {topOrganizations.map((org, index) => (
               <div className="org-card" key={org.id || index}>
                 <img
-                  src={org.logo ? `${API_BASE_URL}${org.logo}` : "/green.jpg"}
+                  src={getImageUrl(org.logo, "/green.jpg")}
                   alt={org.name}
                   className="org-img"
                   onError={(e) => e.target.src = "/green.jpg"}
@@ -272,7 +273,7 @@ export default function Home() {
                 <div className="volunteer" key={vol.id || index}>
                   <div className="volunteer-avatar" style={{ overflow: "hidden" }}>
                     <img
-                      src={vol.photo ? `${API_BASE_URL}${vol.photo}` : "/vol1.png"}
+                      src={getImageUrl(vol.photo, "/vol1.png")}
                       alt={`${vol.firstName} ${vol.lastName}`}
                       style={{ width: "100%", height: "100%", objectFit: "cover" }}
                       onError={(e) => e.target.src = "/vol1.png"}

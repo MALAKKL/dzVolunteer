@@ -2,7 +2,8 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import MissionCard from "../components/MissionCard";
-import { missionsAPI, API_BASE_URL } from "../utils/api";
+import { missionsAPI } from "../utils/api";
+import { getImageUrl } from "../utils/imageUtils";
 
 export default function VolunteerMissionPage() {
   const { id } = useParams();
@@ -27,7 +28,7 @@ export default function VolunteerMissionPage() {
           description: data.description,
           number: data.volunteersNeeded.toString(),
           location: data.location,
-          image: data.image ? `${API_BASE_URL}${data.image}` : "/mp2.png",
+          image: getImageUrl(data.image, "/mp2.png"),
           competencies: data.skills && data.skills.length > 0 ? data.skills.map(s => s.skill.name) : ["General"],
         };
 
