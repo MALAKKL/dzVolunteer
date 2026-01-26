@@ -1,6 +1,5 @@
 # DZ Volunteer - Algerian Volunteering Platform
 
-![CI/CD Status](https://img.shields.io/github/actions/workflow/status/USER_NAME/REPO_NAME/main.yml?branch=main&label=Build%20%26%20Test&style=flat-square)
 ![License](https://img.shields.io/badge/license-ISC-green?style=flat-square)
 
 DZ Volunteer is a modern platform designed to connect passionate volunteers with impactful organizations across Algeria. Our mission is to digitize and simplify the process of community service, from mission discovery to skill validation.
