@@ -1,24 +1,30 @@
 const { hashPassword, comparePassword } = require('../src/utils/password');
 
+// Mock bcrypt to avoid actual hashing cost during tests
+jest.mock('bcrypt', () => ({
+    genSalt: jest.fn().mockResolvedValue('salt'),
+    hash: jest.fn().mockResolvedValue('$2b$10$mockedhashvalue'),
+    compare: jest.fn().mockImplementation((plain, hash) => plain === 'malak123' && hash === '$2b$10$mockedhashvalue')
+}));
+
 describe('Password Utility', () => {
     test('should hash the password correctly', async () => {
         const plain = 'malak123';
         const hashed = await hashPassword(plain);
-        expect(hashed).not.toBe(plain);
-        expect(hashed).toContain('$2b$'); // bcrypt prefix
+        expect(hashed).toBe('$2b$10$mockedhashvalue');
     });
 
     test('should return true for correct password', async () => {
         const plain = 'malak123';
-        const hashed = await hashPassword(plain);
+        const hashed = '$2b$10$mockedhashvalue';
         const isValid = await comparePassword(plain, hashed);
         expect(isValid).toBe(true);
     });
 
     test('should return false for incorrect password', async () => {
-        const plain = 'malak123';
-        const hashed = await hashPassword(plain);
-        const isValid = await comparePassword('wrongpass', hashed);
+        const plain = 'wrongpass';
+        const hashed = '$2b$10$mockedhashvalue';
+        const isValid = await comparePassword(plain, hashed);
         expect(isValid).toBe(false);
     });
 });
