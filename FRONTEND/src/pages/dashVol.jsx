@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react"
 import styles from '../components/volDashboard.module.css'
-import { volunteersAPI, authAPI, skillsAPI, sdgsAPI } from '../utils/api'
+import { volunteersAPI, authAPI, skillsAPI } from '../utils/api'
 import { getImageUrl } from '../utils/imageUtils'
 
 // Utility Functions

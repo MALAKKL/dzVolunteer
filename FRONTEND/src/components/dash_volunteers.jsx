@@ -216,7 +216,7 @@ export default function Volunteers() {
                                     hoursCompleted: parseInt(hrs)
                                   });
                                   alert("Hours validated!");
-                                } catch (_) {
+                                } catch {
                                   alert("Error validating hours");
                                 }
                               }}

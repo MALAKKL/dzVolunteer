@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import styles from '../components/dashAdmin.module.css';
 import { adminAPI } from "../utils/api";
 import { getImageUrl } from "../utils/imageUtils";
@@ -314,7 +314,7 @@ export default function AdminDashboard() {
     );
 
     switch (activeTab) {
-      case 'dashboard':
+      case 'dashboard': {
         // RELIABLE MERGE: Ensure every user in allPlatformUsers is shown
         // Combine with specific profile data if available
         const vMap = new Map(volunteers.map(v => [v.userId || v.id, v]));
@@ -345,6 +345,7 @@ export default function AdminDashboard() {
             onDelete={handleDelete}
           />
         );
+      }
       case 'skill-validation': return <SkillValidationView />;
       default: return null;
     }

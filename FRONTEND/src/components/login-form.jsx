@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { FaEnvelope, FaLock } from "react-icons/fa"
-import { useNavigate } from "react-router-dom"
 import styles from "../styles/signUp.module.css"
 import { authAPI } from "../utils/api"
 
@@ -11,7 +10,6 @@ export default function LoginForm({ accountType, setAccountType, userInfo, setUs
   const [password, setPassword] = useState("")
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
-  const navigate = useNavigate()
 
   const validateForm = () => {
     const newErrors = {}

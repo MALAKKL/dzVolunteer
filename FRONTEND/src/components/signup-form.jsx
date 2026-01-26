@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { useNavigate } from "react-router-dom"
 import { FaUser, FaBuilding, FaEnvelope, FaLock } from "react-icons/fa"
 import { GoogleLogin } from "@react-oauth/google"
 
@@ -10,7 +9,6 @@ import styles from "../styles/signUp.module.css"
 import { authAPI } from "../utils/api"
 
 export default function SignupForm() {
-  const navigate = useNavigate()
   const [accountType, setAccountType] = useState("volunteer")
   const [formData, setFormData] = useState({
     firstName: "",
