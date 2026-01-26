@@ -77,14 +77,6 @@ export default function Volunteers() {
     }
   }
 
-  // Group volunteers by mission
-  const volunteersByMission = volunteers.reduce((acc, volunteer) => {
-    if (!acc[volunteer.mission]) {
-      acc[volunteer.mission] = []
-    }
-    acc[volunteer.mission].push(volunteer)
-    return acc
-  }, {})
 
   // Filter volunteers
   const filteredVolunteers = filter === "all"
@@ -224,7 +216,7 @@ export default function Volunteers() {
                                     hoursCompleted: parseInt(hrs)
                                   });
                                   alert("Hours validated!");
-                                } catch (err) {
+                                } catch (_) {
                                   alert("Error validating hours");
                                 }
                               }}

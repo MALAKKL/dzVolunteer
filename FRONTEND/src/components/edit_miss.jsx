@@ -31,43 +31,38 @@ export default function EditMissionForm() {
 
   const [selectedCompetencies, setSelectedCompetencies] = useState([])
 
+
   useEffect(() => {
+    const fetchMission = async () => {
+      try {
+        setLoading(true);
+        const data = await missionsAPI.getMissionById(missionId);
+        setFormData({
+          missionName: data.title,
+          description: data.description,
+          startDate: data.startDate.split('T')[0],
+          endDate: data.endDate.split('T')[0],
+          location: data.location,
+          volunteersNeeded: data.volunteersNeeded.toString(),
+          competencies: "", // Handled by selectedCompetencies
+          image: null
+        });
+        if (data.skills) {
+          setSelectedCompetencies(data.skills.map(skillWrapper => skillWrapper.skill.name));
+        }
+      } catch (error) {
+        console.error("Failed to load mission", error);
+        alert("Failed to load mission details");
+      } finally {
+        setLoading(false);
+      }
+    };
+
     if (missionId) {
       fetchMission();
     }
   }, [missionId]);
 
-  const fetchMission = async () => {
-    try {
-      setLoading(true);
-      const data = await missionsAPI.getMissionById(missionId);
-      setFormData({
-        missionName: data.title,
-        description: data.description,
-        startDate: data.startDate.split('T')[0],
-        endDate: data.endDate.split('T')[0],
-        location: data.location,
-        volunteersNeeded: data.volunteersNeeded.toString(),
-        competencies: "", // Handled by selectedCompetencies
-        image: null
-      });
-      if (data.skills) {
-        setSelectedCompetencies(data.skills.map(s => s.skill.name));
-      }
-    } catch (error) {
-      console.error("Failed to load mission", error);
-      alert("Failed to load mission details");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const toggleCompetency = (c) => {
-    // Read-only for now if update logic isn't complex enough to handle skill diffing
-    // setSelectedCompetencies(prev =>
-    //   prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c]
-    // )
-  }
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -77,15 +72,6 @@ export default function EditMissionForm() {
     }))
   }
 
-  const handleImageUpload = (e) => {
-    // const file = e.target.files[0]
-    // if (file) {
-    //   setFormData((prev) => ({
-    //     ...prev,
-    //     image: file,
-    //   }))
-    // }
-  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()

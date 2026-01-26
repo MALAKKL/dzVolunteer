@@ -40,17 +40,7 @@ export default function OrganizationsPage() {
         setError(null);
       } catch (err) {
         console.error("Error fetching organizations:", err);
-        setError("Failed to load organizations");
-        // Fallback data
-        setOrganizations([
-          {
-            id: 1,
-            name: "Loading organizations...",
-            subtitle: "Please wait",
-            image: "/organization-default.jpg",
-            description: "Organizations will appear here once loaded.",
-          }
-        ]);
+        setError("Failed to load organizations. Please check your connection.");
       } finally {
         setLoading(false);
       }
@@ -95,32 +85,38 @@ export default function OrganizationsPage() {
             />
           </div>
 
-          {/* Organization Cards */}
-          <div className={styles.orgCardsContainer}>
-            {filteredOrganizations.length > 0 ? (
-              filteredOrganizations.map((org) => (
-                <div key={org.id} className={styles.orgCard}>
-                  <div className={styles.orgCardImage}>
-                    <img src={org.image || "/placeholder.svg"} alt={org.name} />
-                  </div>
-                  <div className={styles.orgCardContent}>
-                    <h3>{org.name}</h3>
-                    <p className={styles.orgSubtitle}>{org.subtitle}</p>
-                    <p className={styles.orgLabel}>description</p>
-                    <p className={styles.orgDescription}>{org.description}</p>
+          {/* Status Messages */}
+          {loading && <div style={{ textAlign: "center", padding: "40px", color: "#347362" }}>🔍 Searching for organizations...</div>}
+          {error && <div style={{ textAlign: "center", padding: "40px", color: "#c53030" }}>⚠️ {error}</div>}
 
-                    <a href={`/organizations/${org.id}`} className={styles.orgSeeMoreBtn}>
-                      see more
-                    </a>
+          {/* Organization Cards */}
+          {!loading && (
+            <div className={styles.orgCardsContainer}>
+              {filteredOrganizations.length > 0 ? (
+                filteredOrganizations.map((org) => (
+                  <div key={org.id} className={styles.orgCard}>
+                    <div className={styles.orgCardImage}>
+                      <img src={org.image || "/placeholder.svg"} alt={org.name} />
+                    </div>
+                    <div className={styles.orgCardContent}>
+                      <h3>{org.name}</h3>
+                      <p className={styles.orgSubtitle}>{org.subtitle}</p>
+                      <p className={styles.orgLabel}>description</p>
+                      <p className={styles.orgDescription}>{org.description}</p>
+
+                      <a href={`/organizations/${org.id}`} className={styles.orgSeeMoreBtn}>
+                        see more
+                      </a>
+                    </div>
                   </div>
+                ))
+              ) : (
+                <div className={styles.orgNoResults}>
+                  <p>No organizations found matching your search.</p>
                 </div>
-              ))
-            ) : (
-              <div className={styles.orgNoResults}>
-                <p>No organizations found matching your search.</p>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </>

@@ -26,9 +26,9 @@ jobs:
         working-directory: ./BACKEND
         run: npx prisma generate
 
-      # - name: Run Tests
-      #   working-directory: ./BACKEND
-      #   run: npm test
+      - name: Run Tests
+        working-directory: ./BACKEND
+        run: npm test
 
   frontend-checks:
     runs-on: ubuntu-latest

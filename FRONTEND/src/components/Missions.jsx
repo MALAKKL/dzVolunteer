@@ -53,21 +53,7 @@ export default function Missions() {
         setError(null);
       } catch (err) {
         console.error("Error fetching missions:", err);
-        setError("Failed to load missions");
-        // Fallback to some default data
-        setMissions([
-          {
-            id: 1,
-            title: "Loading missions...",
-            organization: "Please wait",
-            date: "",
-            description: "",
-            number: "0",
-            location: "",
-            image: "/mp2.png",
-            category: "",
-          }
-        ]);
+        setError("Failed to load missions. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -116,44 +102,50 @@ export default function Missions() {
             />
           </div>
 
-          {/* Mission Cards */}
-          <div className={styles.missionCardsContainer}>
-            {filteredMissions.length > 0 ? (
-              filteredMissions.map((mission) => (
-                <div key={mission.id} className={styles.missionCard}>
-                  <div className={styles.missionCardImage}>
-                    <img src={mission.image || "/placeholder.svg"} alt={mission.title} />
-                    <span className={styles.categoryBadge}>{mission.category}</span>
-                  </div>
-                  <div className={styles.missionCardContent}>
-                    <h3>{mission.title}</h3>
-                    <p className={styles.missionOrganization}>
-                      <strong>Organization:</strong> {mission.organization}
-                    </p>
-                    <p className={styles.missionDate}>
-                      <strong>Date:</strong> {mission.date}
-                    </p>
-                    <p className={styles.missionLocation}>
-                      <strong>Location:</strong> {mission.location}
-                    </p>
-                    <p className={styles.missionLabel}>description</p>
-                    <p className={styles.missionDescription}>{mission.description}</p>
-                    <p className={styles.missionVolunteers}>
-                      <strong>Volunteers needed:</strong> {mission.number}
-                    </p>
+          {/* Status Messages */}
+          {loading && <div style={{ textAlign: "center", padding: "40px", color: "#347362" }}>🍃 Loading available missions...</div>}
+          {error && <div style={{ textAlign: "center", padding: "40px", color: "#c53030" }}>⚠️ {error}</div>}
 
-                    <Link to={`/volunteer/mission/${mission.id}`} className={styles.missionSeeMoreBtn}>
-                      see more
-                    </Link>
+          {/* Mission Cards */}
+          {!loading && (
+            <div className={styles.missionCardsContainer}>
+              {filteredMissions.length > 0 ? (
+                filteredMissions.map((mission) => (
+                  <div key={mission.id} className={styles.missionCard}>
+                    <div className={styles.missionCardImage}>
+                      <img src={mission.image || "/placeholder.svg"} alt={mission.title} />
+                      <span className={styles.categoryBadge}>{mission.category}</span>
+                    </div>
+                    <div className={styles.missionCardContent}>
+                      <h3>{mission.title}</h3>
+                      <p className={styles.missionOrganization}>
+                        <strong>Organization:</strong> {mission.organization}
+                      </p>
+                      <p className={styles.missionDate}>
+                        <strong>Date:</strong> {mission.date}
+                      </p>
+                      <p className={styles.missionLocation}>
+                        <strong>Location:</strong> {mission.location}
+                      </p>
+                      <p className={styles.missionLabel}>description</p>
+                      <p className={styles.missionDescription}>{mission.description}</p>
+                      <p className={styles.missionVolunteers}>
+                        <strong>Volunteers needed:</strong> {mission.number}
+                      </p>
+
+                      <Link to={`/volunteer/mission/${mission.id}`} className={styles.missionSeeMoreBtn}>
+                        see more
+                      </Link>
+                    </div>
                   </div>
+                ))
+              ) : (
+                <div className={styles.missionNoResults}>
+                  <p>No missions found matching your search.</p>
                 </div>
-              ))
-            ) : (
-              <div className={styles.missionNoResults}>
-                <p>No missions found matching your search.</p>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
