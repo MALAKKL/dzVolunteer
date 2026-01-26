@@ -368,7 +368,7 @@ export default function Dashboard() {
       if (!selectedSkillId) throw new Error("No skill selected from catalog.");
 
       console.log(`DASHBOARD: Sending verification request for Item ID: ${selectedSkillId}`);
-      const res = await volunteersAPI.addSkillWithCertificate(formData)
+      await volunteersAPI.addSkillWithCertificate(formData)
 
       alert("Verification request submitted! Admin will review your document.")
       setShowSkillModal(false)
