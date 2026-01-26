@@ -1,0 +1,64 @@
+name: DZ Volunteer CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  backend-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: BACKEND/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./BACKEND
+        run: npm install
+
+      - name: Generate Prisma Client
+        working-directory: ./BACKEND
+        run: npx prisma generate
+
+      # - name: Run Tests
+      #   working-directory: ./BACKEND
+      #   run: npm test
+
+  frontend-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: FRONTEND/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./FRONTEND
+        run: npm install
+
+      - name: Linting
+        working-directory: ./FRONTEND
+        run: npm run lint
+
+      - name: Build
+        working-directory: ./FRONTEND
+        run: npm run build
+
+  docker-build:
+    needs: [backend-checks, frontend-checks]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Backend Image
+        run: docker build ./BACKEND -t dz-backend:latest
+      - name: Build Frontend Image
+        run: docker build ./FRONTEND -t dz-frontend:latest
